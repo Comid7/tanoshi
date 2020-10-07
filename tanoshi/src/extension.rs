@@ -9,10 +9,6 @@ use tanoshi_lib::manga::{Chapter, Manga, Params, Source, SourceLogin, SourceLogi
 
 use anyhow::{anyhow, Result};
 
-//pub mod local;
-pub mod manga;
-pub mod repository;
-
 pub struct ExtensionProxy {
     extension: Box<dyn Extension>,
     #[allow(dead_code)]
