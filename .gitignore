@@ -6,3 +6,5 @@ target/
 mangas/
 config.yml
 *.db
+*.db-shm
+*.db-wal

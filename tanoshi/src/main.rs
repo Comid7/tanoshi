@@ -6,22 +6,32 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 
-mod auth;
+// mod auth;
 mod config;
 mod extension;
-mod favorites;
-mod filters;
-mod handlers;
-mod history;
-mod update;
-mod migration;
+// mod favorites;
+// mod filters;
+// mod handlers;
+// mod history;
+// mod update;
+mod catalogue;
+mod context;
+mod db;
+mod graphql;
 
 use anyhow::Result;
 use clap::Clap;
 
-use std::sync::{Arc, RwLock};
-use warp::Filter;
+use crate::context::GlobalContext;
+use crate::graphql::QueryRoot;
+use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
+use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql_warp::{BadRequest, Response};
 use config::Config;
+use std::convert::Infallible;
+use std::sync::{Arc, RwLock};
+use warp::http::{Response as HttpResponse, StatusCode};
+use warp::{Filter, Rejection, Reply};
 
 #[derive(Clap)]
 #[clap(version = "0.14.0")]
@@ -38,52 +48,61 @@ async fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
     let config = Config::open(opts.config)?;
 
-    if migration::migrate(&config.database_path).await.is_err() {
-        log::error!("failed when migrating database...");
-    }
-
     let secret = config.secret;
-    let extensions = Arc::new(RwLock::new(extension::Extensions::new()));
+    let mut extensions = extension::Extensions::new();
+    if extensions
+        .initialize(config.plugin_path.clone(), config.plugin_config)
+        .is_err()
     {
-        let mut exts = extensions.write().unwrap();
-        if exts.initialize(config.plugin_path.clone(), config.plugin_config).is_err() {
-            log::error!("error initialize plugin");
-        }
+        log::error!("error initialize plugin");
     }
 
-    let serve_static = filters::static_files::static_files();
+    // let serve_static = filters::static_files::static_files();
 
-    let auth = auth::auth::Auth::new(config.database_path.clone());
-    let auth_api = filters::auth::authentication(secret.clone(), auth.clone());
+    // let routes = api.or(serve_static).with(warp::log("manga"));
 
-    let manga = extension::manga::Manga::new(config.database_path.clone(), extensions.clone());
-    let manga_api = filters::manga::manga(secret.clone(), config.plugin_path.clone(), manga);
+    let pool = db::establish_connection(config.database_path).await;
 
-    let fav = favorites::Favorites::new(config.database_path.clone());
-    let fav_api = filters::favorites::favorites(secret.clone(), fav);
+    let schema = Schema::build(
+        QueryRoot::default(),
+        EmptyMutation::default(),
+        EmptySubscription::default(),
+    )
+    .data(GlobalContext::new(pool, extensions))
+    .finish();
 
-    let history = history::History::new(config.database_path.clone());
-    let history_api = filters::history::history(secret.clone(), history.clone());
+    println!("Playground: http://localhost:8000");
 
-    let update = update::Update::new(config.database_path.clone());
-    let updates_api = filters::updates::updates(secret.clone(), update.clone());
+    let graphql_post = async_graphql_warp::graphql(schema).and_then(
+        |(schema, request): (
+            Schema<QueryRoot, EmptyMutation, EmptySubscription>,
+            async_graphql::Request,
+        )| async move { Ok::<_, Infallible>(Response::from(schema.execute(request).await)) },
+    );
 
-    let version_check = warp::path!("api" / "version")
-        .and(warp::get())
-        .map(|| Ok(warp::reply::html(env!("CARGO_PKG_VERSION"))));
+    let graphql_playground = warp::path::end().and(warp::get()).map(|| {
+        HttpResponse::builder()
+            .header("content-type", "text/html")
+            .body(playground_source(GraphQLPlaygroundConfig::new("/")))
+    });
 
-    let api = manga_api
-        .or(auth_api)
-        .or(fav_api)
-        .or(history_api)
-        .or(updates_api)
-        .or(version_check)
-        .recover(filters::handle_rejection);
+    let routes = graphql_playground
+        .or(graphql_post)
+        .recover(|err: Rejection| async move {
+            if let Some(BadRequest(err)) = err.find() {
+                return Ok::<_, Infallible>(warp::reply::with_status(
+                    err.to_string(),
+                    StatusCode::BAD_REQUEST,
+                ));
+            }
 
-    let routes = api.or(serve_static).with(warp::log("manga"));
+            Ok(warp::reply::with_status(
+                "INTERNAL_SERVER_ERROR".to_string(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ))
+        });
 
     warp::serve(routes).run(([0, 0, 0, 0], config.port)).await;
 
     return Ok(());
 }
-

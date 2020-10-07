@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use lib::Library;
 use std::path::PathBuf;
 use std::{
@@ -5,43 +6,63 @@ use std::{
     sync::Arc,
 };
 use tanoshi_lib::extensions::{Extension, PluginDeclaration};
-use tanoshi_lib::manga::{Chapter, Manga, Params, Source, SourceLogin, SourceLoginResult};
-
-use anyhow::{anyhow, Result};
+use tanoshi_lib::model::{
+    Chapter, Manga, SortByParam, SortOrderParam, Source, SourceLogin, SourceLoginResult,
+};
+use tokio::task::spawn_blocking;
+use url::Url;
 
 pub struct ExtensionProxy {
-    extension: Box<dyn Extension>,
+    extension: Arc<Box<dyn Extension>>,
     #[allow(dead_code)]
     lib: Arc<Library>,
 }
 
-impl Extension for ExtensionProxy {
-    fn info(&self) -> Source {
-        self.extension.info()
+impl ExtensionProxy {
+    pub fn detail(&self) -> Source {
+        self.extension.detail()
     }
 
-    fn get_mangas(&self, param: Params, auth: String) -> Result<Vec<Manga>> {
-        self.extension.get_mangas(param, auth)
+    pub async fn get_mangas(
+        &self,
+        keyword: Option<String>,
+        genres: Option<Vec<String>>,
+        page: Option<i32>,
+        sort_by: Option<SortByParam>,
+        sort_order: Option<SortOrderParam>,
+        auth: Option<String>,
+    ) -> Result<Vec<Manga>> {
+        let extension = self.extension.clone();
+        spawn_blocking(move || {
+            extension
+                .get_mangas(keyword, genres, page, sort_by, sort_order, auth)
+        })
+        .await?
     }
 
-    fn get_manga_info(&self, path: &String) -> Result<Manga> {
-        self.extension.get_manga_info(path)
+    pub async fn get_manga_info(&self, url: Url) -> Result<Manga> {
+        let extension = self.extension.clone();
+        spawn_blocking(move || extension.get_manga_info(url)).await?
     }
 
-    fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>> {
-        self.extension.get_chapters(path)
+    pub async fn get_chapters(&self, url: Url) -> Result<Vec<Chapter>> {
+        let extension = self.extension.clone();
+        spawn_blocking(move || extension.get_chapters(url)).await?
     }
 
-    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
-        self.extension.get_pages(path)
+    pub async fn get_pages(&self, url: Url) -> Result<Vec<String>> {
+        let extension = self.extension.clone();
+        spawn_blocking(move || extension.get_pages(url)).await?
     }
 
-    fn get_page(&self, url: &String) -> Result<Vec<u8>> {
-        self.extension.get_page(url)
+    pub async fn get_page(&self, url: Url) -> Result<Vec<u8>> {
+        let extension = self.extension.clone();
+        spawn_blocking(move || extension.get_page(url)).await?
     }
 
-    fn login(&self, login_info: SourceLogin) -> Result<SourceLoginResult> {
-        self.extension.login(login_info)
+    pub async fn login(&self, login_info: SourceLogin) -> Result<SourceLoginResult> {
+        let extension = self.extension.clone();
+        spawn_blocking(move || extension.login(login_info)).await?
     }
 }
 
@@ -97,6 +118,10 @@ impl Extensions {
 
     pub fn get(&self, name: &String) -> Option<&ExtensionProxy> {
         self.extensions.get(name)
+    }
+
+    pub fn extentions(&self) -> &HashMap<String, ExtensionProxy> {
+        &self.extensions
     }
 
     pub unsafe fn load(
@@ -165,7 +190,7 @@ impl PluginRegistrar {
 impl tanoshi_lib::extensions::PluginRegistrar for PluginRegistrar {
     fn register_function(&mut self, name: &str, extension: Box<dyn Extension>) {
         let proxy = ExtensionProxy {
-            extension,
+            extension: Arc::new(extension),
             lib: Arc::clone(&self.lib),
         };
 

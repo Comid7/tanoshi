@@ -1,11 +1,10 @@
 use crate::catalogue::*;
 use crate::extension::Extensions;
-use async_graphql::{Context, Object, Result, Schema, Subscription, ID};
 use sqlx::AnyPool;
 
 pub struct GlobalContext {
-    pool: AnyPool,
-    extensions: Extensions,
+    pub pool: AnyPool,
+    pub extensions: Extensions,
 }
 
 impl GlobalContext {
