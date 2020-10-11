@@ -23,7 +23,7 @@ use anyhow::Result;
 use clap::Clap;
 
 use crate::context::GlobalContext;
-use crate::graphql::QueryRoot;
+use crate::graphql::{QueryRoot, MutationRoot};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql_warp::{BadRequest, Response};
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
 
     let schema = Schema::build(
         QueryRoot::default(),
-        EmptyMutation::default(),
+        MutationRoot::default(),
         EmptySubscription::default(),
     )
     .extension(ApolloTracing)
@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
 
     let graphql_post = async_graphql_warp::graphql(schema).and_then(
         |(schema, request): (
-            Schema<QueryRoot, EmptyMutation, EmptySubscription>,
+            Schema<QueryRoot, MutationRoot, EmptySubscription>,
             async_graphql::Request,
         )| async move { Ok::<_, Infallible>(Response::from(schema.execute(request).await)) },
     );

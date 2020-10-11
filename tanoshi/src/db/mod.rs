@@ -79,8 +79,28 @@ impl Db {
         }
     }
 
-    pub async fn get_mangas(&self, source_id: Vec<u64>, path: &String) -> Vec<Manga> {
-        todo!()
+    pub async fn get_library(&self) -> Result<Vec<Manga>> {
+        let mut stream = sqlx::query(r#"SELECT * FROM manga WHERE is_favorite = true"#)
+            .fetch(&self.pool);
+
+        let mut mangas = vec![];
+        while let Some(row) = stream.try_next().await? {
+           mangas.push(Manga{
+               id: row.get(0),
+               source_id: row.get(1),
+               title: row.get(2),
+               author: row.get::<String, _>(3).split(",").map(|a| a.to_string()).collect(),
+               genre: row.get::<String, _>(4).split(",").map(|a| a.to_string()).collect(),
+               status: row.get(5),
+               description: row.get(6),
+               path: row.get(7),
+               cover_url: row.get(8),
+               last_read_chapter: row.get(9),
+               is_favorite: row.get(10),
+               date_added: row.get(11),
+           });
+        }
+        Ok(mangas)
     }
 
     pub async fn insert_manga(&self, manga: &Manga) -> Result<i64> {
@@ -342,5 +362,15 @@ impl Db {
         } else {
             Ok(pages)
         }
+    }
+
+    pub async fn favorite_manga(&self, manga_id: i64, is_favorite: bool) -> Result<u64> {
+        sqlx::query("UPDATE manga SET is_favorite = ? WHERE id = ?")
+            .bind(is_favorite)
+            .bind(manga_id)
+            .execute(&self.pool)
+            .await
+            .map(|res| res.rows_affected())
+            .map_err(|e| anyhow::anyhow!(e))
     }
 }
