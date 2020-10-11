@@ -5,7 +5,6 @@ use std::iter;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct Config {
-    pub base_url: Option<String>,
     #[serde(default = "default_port")]
     pub port: u16,
     #[serde(default = "default_database_path")]
@@ -17,13 +16,12 @@ pub struct Config {
     #[serde(default = "default_plugin_path")]
     pub plugin_path: String,
     #[serde(default = "BTreeMap::new")]
-    pub plugin_config: BTreeMap<String, serde_yaml::Value>,
+    pub plugin_config: BTreeMap<i32, serde_yaml::Value>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            base_url: None,
             port: default_port(),
             database_path: default_database_path(),
             secret: default_secret(),

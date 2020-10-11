@@ -1,31 +1,60 @@
+use super::Chapter;
 use crate::context::GlobalContext;
-use async_graphql::{Context, Object, Enum};
-use url::Url;
+use async_graphql::futures::{stream, StreamExt};
+use async_graphql::{Context, Object};
 
 /// A type represent manga details, normalized across source
 pub struct Manga {
-    pub id: i32,
-    pub hash: String,
+    pub id: i64,
+    pub source_id: i64,
     pub title: String,
     pub author: Vec<String>,
     pub genre: Vec<String>,
     pub status: Option<String>,
     pub description: Option<String>,
-    pub url: Url,
-    pub thumbnail_url: Url,
-    pub last_read: Option<i32>,
-    pub last_page: Option<i32>,
+    pub path: String,
+    pub cover_url: String,
+    pub last_read_chapter: Option<i32>,
     pub is_favorite: bool,
+    pub date_added: chrono::NaiveDateTime,
+}
+
+impl Manga {
+    pub fn incomplete(&self) -> bool {
+        self.status.is_none()
+            || self.description.is_none()
+            || self.author.is_empty()
+            || self.genre.is_empty()
+    }
+}
+
+impl From<tanoshi_lib::model::Manga> for Manga {
+    fn from(m: tanoshi_lib::model::Manga) -> Self {
+        Self {
+            id: 0,
+            source_id: m.source_id,
+            title: m.title.clone(),
+            author: m.author.clone(),
+            genre: m.genre.clone(),
+            status: m.status.clone(),
+            description: m.description.clone(),
+            path: m.path.clone(),
+            cover_url: m.cover_url.clone(),
+            last_read_chapter: None,
+            is_favorite: false,
+            date_added: chrono::NaiveDateTime::from_timestamp(0, 0),
+        }
+    }
 }
 
 #[Object]
 impl Manga {
-    async fn id(&self) -> i32 {
+    async fn id(&self) -> i64 {
         self.id
     }
 
-    async fn hash(&self) -> String {
-        self.hash.clone()
+    async fn source_id(&self) -> i64 {
+        self.source_id
     }
 
     async fn title(&self) -> String {
@@ -48,90 +77,67 @@ impl Manga {
         self.description.clone()
     }
 
-    async fn url(&self) -> String {
-        self.url.as_str().to_string()
+    async fn path(&self) -> String {
+        self.path.as_str().to_string()
     }
 
-    async fn thumbnail_url(&self) -> String {
-        self.thumbnail_url.as_str().to_string()
+    async fn cover_url(&self) -> String {
+        self.cover_url.as_str().to_string()
     }
 
-    async fn last_read(&self) -> Option<i32> {
-        self.last_read
-    }
-
-    async fn last_page(&self) -> Option<i32> {
-        self.last_page
+    async fn last_read_chapter(&self) -> Option<i32> {
+        self.last_read_chapter
     }
 
     async fn is_favorite(&self) -> bool {
         self.is_favorite
     }
-}
 
-impl From<&tanoshi_lib::model::Manga> for Manga {
-    fn from(m: &tanoshi_lib::model::Manga) -> Self {
-        Self {
-            id: m.id,
-            hash: m.hash.clone(),
-            title: m.title.clone(),
-            author: m.author.clone(),
-            genre: m.genre.clone(),
-            status: m.status.clone(),
-            description: m.description.clone(),
-            url: m.url.clone(),
-            thumbnail_url: m.thumbnail_url.clone(),
-            last_page: None,
-            last_read: None,
-            is_favorite: false,
+    async fn date_added(&self) -> chrono::NaiveDateTime {
+        self.date_added
+    }
+
+    async fn chapters(&self, ctx: &Context<'_>) -> Vec<Chapter> {
+        let manga_id = self.id.clone();
+        let db = ctx.data_unchecked::<GlobalContext>().db.clone();
+        match db.get_chapters_by_manga_id(manga_id).await {
+            Ok(chapters) => chapters,
+            Err(_) => {
+                let chapters = ctx.data_unchecked::<GlobalContext>()
+                    .extensions
+                    .get(self.source_id)
+                    .unwrap()
+                    .get_chapters(self.path.clone())
+                    .await
+                    .unwrap();
+
+                let chapter_stream = stream::iter(chapters);
+                let chapter_stream = chapter_stream.then(|chapter| async {
+                    match db
+                        .get_chapter_by_source_path(chapter.source_id, &chapter.path)
+                        .await
+                    {
+                        Some(ch) => ch,
+                        None => {
+                            let mut ch: Chapter = chapter.into();
+                            ch.manga_id = (&manga_id).clone();
+                            let id = db.insert_chapter(&ch).await.unwrap();
+                            ch.id = id;
+                            ch
+                        }
+                    }
+                });
+                chapter_stream.collect().await
+            }
         }
     }
-}
 
-/// A type represent sort parameter for query manga from source, normalized across sources
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
-#[graphql(remote = "tanoshi_lib::model::SortByParam")]
-pub enum SortByParam {
-    LastUpdated,
-    Title,
-    Comment,
-    Views,
-}
-
-/// A type represent order parameter for query manga from source, normalized across sources
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
-#[graphql(remote = "tanoshi_lib::model::SortOrderParam")]
-pub enum SortOrderParam {
-    Asc,
-    Desc,
-}
-
-#[derive(Default)]
-pub struct MangaRoot;
-
-#[Object]
-impl MangaRoot {
-    async fn mangas(
+    async fn chapter(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "source of the manga")] source: String,
-        #[graphql(desc = "keyword of the manga")] keyword: Option<String>,
-        #[graphql(desc = "genres of the manga")] genres: Option<Vec<String>>,
-        #[graphql(desc = "page")] page: Option<i32>,
-        #[graphql(desc = "sort by")] sort_by: Option<SortByParam>,
-        #[graphql(desc = "sort order")] sort_order: Option<SortOrderParam>,
-    ) -> Vec<Manga> {
-        let sort_by = sort_by.map(|s| s.into());
-        let sort_order = sort_order.map(|s| s.into());
-        ctx.data_unchecked::<GlobalContext>()
-            .extensions
-            .get(&source)
-            .unwrap()
-            .get_mangas(keyword, genres, page, sort_by, sort_order, None)
-            .await
-            .unwrap()
-            .iter()
-            .map(|m| m.into())
-            .collect()
+        #[graphql(desc = "chapter id")] id: i64,
+    ) -> Option<Chapter> {
+        let db = ctx.data_unchecked::<GlobalContext>().db.clone();
+        db.get_chapter_by_id(id).await
     }
 }

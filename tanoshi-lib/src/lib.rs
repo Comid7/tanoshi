@@ -28,36 +28,40 @@ pub mod model {
     /// A type represent source
     #[derive(Debug, Clone)]
     pub struct Source {
+        pub id: i64,
         pub name: String,
-        pub url: url::Url,
+        pub url: String,
         pub version: String,
     }
 
     /// A type represent manga details, normalized across source
     #[derive(Debug, Clone)]
     pub struct Manga {
-        pub id: i32,
-        pub hash: String,
+        pub source_id: i64,
         pub title: String,
         pub author: Vec<String>,
         pub genre: Vec<String>,
         pub status: Option<String>,
         pub description: Option<String>,
-        pub url: url::Url,
-        pub thumbnail_url: url::Url,
+        pub path: String,
+        pub cover_url: String,
     }
 
     /// A type represent chapter, normalized across source
     #[derive(Debug, Clone)]
     pub struct Chapter {
-        pub id: i32,
-        pub hash: String,
-        pub manga_id: i32,
-        pub vol: Option<String>,
-        pub no: Option<String>,
-        pub title: Option<String>,
-        pub url: url::Url,
+        pub source_id: i64,
+        pub title: String,
+        pub path: String,
+        pub rank: i64,
         pub uploaded: chrono::NaiveDateTime,
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct Page {
+        pub source_id: i64,
+        pub rank: i64,
+        pub url: String,
     }
 
     /// A type represent sort parameter for query manga from source, normalized across source
@@ -93,21 +97,11 @@ pub mod model {
 #[cfg(feature = "extensions")]
 pub mod extensions {
     use crate::model::{
-        Chapter, Manga, SortByParam, SortOrderParam, Source, SourceLogin, SourceLoginResult,
+        Chapter, Manga, SortByParam, SortOrderParam, Source, SourceLogin, SourceLoginResult, Page
     };
     use anyhow::{anyhow, Result};
-    use crypto::digest::Digest;
-    use crypto::sha2::Sha256;
     use serde_yaml;
-    use url::Url;
     use std::io::Read;
-
-    pub fn hash_url(url: Url) -> String {
-        let mut hasher = Sha256::new();
-        hasher.input_str(url.as_str());
-        let hex = hasher.result_str();
-        hex
-    }
 
     /// `Extension` trait is an implementation for building extensions
     pub trait Extension: Send + Sync {
@@ -136,18 +130,18 @@ pub mod extensions {
         ) -> Result<Vec<Manga>>;
 
         /// Returns detail of manga
-        fn get_manga_info(&self, path: Url) -> Result<Manga>;
+        fn get_manga_info(&self, path: &String) -> Result<Manga>;
 
         /// Returns list of chapters of a manga
-        fn get_chapters(&self, path: Url) -> Result<Vec<Chapter>>;
+        fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>>;
 
         /// Returns list of pages from a chapter of a manga
-        fn get_pages(&self, path: Url) -> Result<Vec<String>>;
+        fn get_pages(&self, path: &String) -> Result<Vec<Page>>;
 
         /// Proxy image
-        fn get_page(&self, url: Url) -> Result<Vec<u8>> {
+        fn get_page(&self, url: &String) -> Result<Vec<u8>> {
             let bytes = {
-                let resp = ureq::get(url.as_str()).call();
+                let resp = ureq::get(url).call();
                 let mut reader = resp.into_reader();
                 let mut bytes = vec![];
                 if reader.read_to_end(&mut bytes).is_err() {
@@ -169,7 +163,7 @@ pub mod extensions {
         pub rustc_version: &'static str,
         pub core_version: &'static str,
         pub name: &'static str,
-        pub register: unsafe fn(&mut dyn PluginRegistrar, Option<&serde_yaml::Value>),
+        pub register: unsafe fn(&mut dyn PluginRegistrar),
     }
 
     /// A trait for register an extension

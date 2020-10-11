@@ -27,11 +27,11 @@ use crate::graphql::QueryRoot;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql_warp::{BadRequest, Response};
+use async_graphql::extensions::ApolloTracing;
 use config::Config;
 use std::convert::Infallible;
-use std::sync::{Arc, RwLock};
 use warp::http::{Response as HttpResponse, StatusCode};
-use warp::{Filter, Rejection, Reply};
+use warp::{Filter, Rejection};
 
 #[derive(Clap)]
 #[clap(version = "0.14.0")]
@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
     let secret = config.secret;
     let mut extensions = extension::Extensions::new();
     if extensions
-        .initialize(config.plugin_path.clone(), config.plugin_config)
+        .initialize(config.plugin_path.clone())
         .is_err()
     {
         log::error!("error initialize plugin");
@@ -61,13 +61,14 @@ async fn main() -> Result<()> {
 
     // let routes = api.or(serve_static).with(warp::log("manga"));
 
-    let pool = db::establish_connection(config.database_path).await;
+    let pool = db::Db::establish_connection(config.database_path).await;
 
     let schema = Schema::build(
         QueryRoot::default(),
         EmptyMutation::default(),
         EmptySubscription::default(),
     )
+    .extension(ApolloTracing)
     .data(GlobalContext::new(pool, extensions))
     .finish();
 
@@ -80,10 +81,10 @@ async fn main() -> Result<()> {
         )| async move { Ok::<_, Infallible>(Response::from(schema.execute(request).await)) },
     );
 
-    let graphql_playground = warp::path::end().and(warp::get()).map(|| {
+    let graphql_playground = warp::path!("graphql").and(warp::get()).map(|| {
         HttpResponse::builder()
             .header("content-type", "text/html")
-            .body(playground_source(GraphQLPlaygroundConfig::new("/")))
+            .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
     });
 
     let routes = graphql_playground

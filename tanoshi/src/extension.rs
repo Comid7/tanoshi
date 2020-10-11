@@ -7,10 +7,9 @@ use std::{
 };
 use tanoshi_lib::extensions::{Extension, PluginDeclaration};
 use tanoshi_lib::model::{
-    Chapter, Manga, SortByParam, SortOrderParam, Source, SourceLogin, SourceLoginResult,
+    Chapter, Manga, SortByParam, SortOrderParam, Source, SourceLogin, SourceLoginResult, Page
 };
 use tokio::task::spawn_blocking;
-use url::Url;
 
 pub struct ExtensionProxy {
     extension: Arc<Box<dyn Extension>>,
@@ -40,24 +39,24 @@ impl ExtensionProxy {
         .await?
     }
 
-    pub async fn get_manga_info(&self, url: Url) -> Result<Manga> {
+    pub async fn get_manga_info(&self, path: String) -> Result<Manga> {
         let extension = self.extension.clone();
-        spawn_blocking(move || extension.get_manga_info(url)).await?
+        spawn_blocking(move || extension.get_manga_info(&path)).await?
     }
 
-    pub async fn get_chapters(&self, url: Url) -> Result<Vec<Chapter>> {
+    pub async fn get_chapters(&self, path: String) -> Result<Vec<Chapter>> {
         let extension = self.extension.clone();
-        spawn_blocking(move || extension.get_chapters(url)).await?
+        spawn_blocking(move || extension.get_chapters(&path)).await?
     }
 
-    pub async fn get_pages(&self, url: Url) -> Result<Vec<String>> {
+    pub async fn get_pages(&self, path: String) -> Result<Vec<Page>> {
         let extension = self.extension.clone();
-        spawn_blocking(move || extension.get_pages(url)).await?
+        spawn_blocking(move || extension.get_pages(&path)).await?
     }
 
-    pub async fn get_page(&self, url: Url) -> Result<Vec<u8>> {
+    pub async fn get_page(&self, url: String) -> Result<Vec<u8>> {
         let extension = self.extension.clone();
-        spawn_blocking(move || extension.get_page(url)).await?
+        spawn_blocking(move || extension.get_page(&url)).await?
     }
 
     pub async fn login(&self, login_info: SourceLogin) -> Result<SourceLoginResult> {
@@ -67,7 +66,7 @@ impl ExtensionProxy {
 }
 
 pub struct Extensions {
-    extensions: HashMap<String, ExtensionProxy>,
+    extensions: HashMap<i64, ExtensionProxy>,
 }
 
 impl Extensions {
@@ -80,7 +79,6 @@ impl Extensions {
     pub fn initialize<P: AsRef<std::path::Path>>(
         &mut self,
         path: P,
-        config: BTreeMap<String, serde_yaml::Value>,
     ) -> Result<()> {
         for entry in std::fs::read_dir(path.as_ref())?
             .into_iter()
@@ -100,34 +98,26 @@ impl Extensions {
             })
         {
             let path = entry?.path();
-            let name = path
-                .file_stem()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-                .to_string()
-                .replace("lib", "");
             info!("load plugin from {:?}", path.clone());
             unsafe {
-                self.load(path.to_str().unwrap().to_string(), config.get(&name))
+                self.load(path.to_str().unwrap().to_string())
                     .unwrap()
             }
         }
         Ok(())
     }
 
-    pub fn get(&self, name: &String) -> Option<&ExtensionProxy> {
-        self.extensions.get(name)
+    pub fn get(&self, id: i64) -> Option<&ExtensionProxy> {
+        self.extensions.get(&id)
     }
 
-    pub fn extentions(&self) -> &HashMap<String, ExtensionProxy> {
+    pub fn extentions(&self) -> &HashMap<i64, ExtensionProxy> {
         &self.extensions
     }
 
     pub unsafe fn load(
         &mut self,
         library_path: String,
-        config: Option<&serde_yaml::Value>,
     ) -> Result<()> {
         let library_path = PathBuf::from(library_path);
         if cfg!(target_os = "macos") {
@@ -157,24 +147,24 @@ impl Extensions {
         }
 
         let mut registrar = PluginRegistrar::new(Arc::clone(&library));
-        (decl.register)(&mut registrar, config);
+        (decl.register)(&mut registrar);
 
         self.extensions.extend(registrar.extensions);
 
         Ok(())
     }
 
-    pub fn remove(&mut self, name: &String) -> Result<()> {
-        if self.extensions.remove(name).is_some() {
+    pub fn remove(&mut self, id: i64) -> Result<()> {
+        if self.extensions.remove(&id).is_some() {
             Ok(())
         } else {
-            Err(anyhow!("There is no extension {}", &name))
+            Err(anyhow!("There is no extension {}", id))
         }
     }
 }
 
 pub struct PluginRegistrar {
-    extensions: HashMap<String, ExtensionProxy>,
+    extensions: HashMap<i64, ExtensionProxy>,
     lib: Arc<Library>,
 }
 
@@ -194,6 +184,6 @@ impl tanoshi_lib::extensions::PluginRegistrar for PluginRegistrar {
             lib: Arc::clone(&self.lib),
         };
 
-        self.extensions.insert(name.to_string(), proxy);
+        self.extensions.insert(proxy.detail().id, proxy);
     }
 }

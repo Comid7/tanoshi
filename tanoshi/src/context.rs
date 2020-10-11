@@ -1,14 +1,14 @@
 use crate::catalogue::*;
 use crate::extension::Extensions;
-use sqlx::AnyPool;
+use crate::db::Db;
 
 pub struct GlobalContext {
-    pub pool: AnyPool,
+    pub db: Db,
     pub extensions: Extensions,
 }
 
 impl GlobalContext {
-    pub fn new(pool: AnyPool, extensions: Extensions) -> Self {
-        Self { pool, extensions }
+    pub fn new(db: Db, extensions: Extensions) -> Self {
+        Self { db, extensions }
     }
 }
