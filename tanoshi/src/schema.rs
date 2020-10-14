@@ -1,4 +1,5 @@
-use crate::catalogue::{CatalogueRoot, SourceRoot, LibraryMutationRoot};
+use crate::catalogue::{CatalogueRoot, SourceRoot};
+use crate::library::{LibraryRoot, LibraryMutationRoot};
 use async_graphql::{
     Context, EmptyMutation, EmptySubscription, MergedObject, Object, Result, Schema, Subscription,
     ID,
@@ -7,7 +8,7 @@ use async_graphql::{
 pub type TanoshiSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
 #[derive(MergedObject, Default)]
-pub struct QueryRoot(SourceRoot, CatalogueRoot);
+pub struct QueryRoot(SourceRoot, CatalogueRoot, LibraryRoot);
 
 #[derive(MergedObject, Default)]
 pub struct MutationRoot(LibraryMutationRoot);

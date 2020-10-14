@@ -103,32 +103,5 @@ impl CatalogueRoot {
         } else {
             None
         }
-    }   
-
-    async fn library(&self, ctx: &Context<'_>) -> Vec<Manga> {
-        match ctx.data_unchecked::<GlobalContext>().db.get_library().await {
-            Ok(mangas) => mangas,
-            Err(_) => vec![]
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct LibraryMutationRoot;
-
-#[Object]
-impl LibraryMutationRoot {
-    async fn add_to_library(&self, ctx: &Context<'_>, #[graphql(desc = "manga id")] manga_id: i64,) -> Result<u64> {
-        match  ctx.data_unchecked::<GlobalContext>().db.favorite_manga(manga_id, true).await {
-            Ok(rows) => Ok(rows),
-            Err(err) => Err(format!("error add manga to library: {}", err).into()),
-        }
-    }
-
-    async fn delete_from_library(&self, ctx: &Context<'_>, #[graphql(desc = "manga id")] manga_id: i64,) -> Result<u64> {
-        match  ctx.data_unchecked::<GlobalContext>().db.favorite_manga(manga_id, false).await {
-            Ok(rows) => Ok(rows),
-            Err(err) => Err(format!("error add manga to library: {}", err).into()),
-        }
     }
 }

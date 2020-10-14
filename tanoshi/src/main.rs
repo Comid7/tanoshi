@@ -17,13 +17,14 @@ mod extension;
 mod catalogue;
 mod context;
 mod db;
-mod graphql;
+mod schema;
+mod library;
 
 use anyhow::Result;
 use clap::Clap;
 
 use crate::context::GlobalContext;
-use crate::graphql::{QueryRoot, MutationRoot};
+use crate::schema::{QueryRoot, MutationRoot};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql_warp::{BadRequest, Response};

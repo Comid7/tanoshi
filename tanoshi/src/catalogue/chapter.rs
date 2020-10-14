@@ -1,4 +1,4 @@
-use super::Page;
+use super::{Manga, Page};
 use crate::context::GlobalContext;
 use crate::db::Db;
 use async_graphql::futures::{stream, StreamExt};
@@ -84,7 +84,7 @@ impl Chapter {
         self.date_added
     }
 
-     async fn pages(
+    async fn pages(
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "fetch from source", default = false)] fetch: bool,
