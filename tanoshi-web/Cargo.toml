@@ -7,32 +7,29 @@ description = "Tanoshi Web"
 repository = "https://github.com/faldez/tanoshi"
 license = "MIT"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+[profile.release]
+lto = true
 
-[features]
-default = ["console_error_panic_hook"]
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
-console_error_panic_hook = { version = "0.1", optional = true }
-wee_alloc = { version = "0.4"}
-yew = {version="0.17"}
-yew-router = {version="0.14"}
-serde = "1"
-serde_json ="1"
-serde_urlencoded = "0.6"
-http = "0.2"
+console_error_panic_hook = "^0.1"
+dominator = "^0.5"
 log = "0.4"
 wasm-logger = "0.2"
-anyhow = "1"
-quote = "1"
-js-sys = "0.3"
+thiserror = "1"
 chrono = { version = "0.4", features = ["serde"] }
-tanoshi-lib = {path = "../tanoshi-lib", features = ["rest"]}
-
-[dependencies.ring]
-version = "0.16.15"
+graphql_client = { version = "^0.9", features = ["web"] }
+wasm-bindgen = "^0.2"
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "1.0"
+lazy_static = "1.0.1"
+js-sys = "^0.3"
+futures = "^0.3"
+wasm-bindgen-futures = "^0.4"
+futures-signals = "0.3.0"
+reqwest = {version = "^0.10", features = ["json"]}
 
 [dependencies.web-sys]
 version = "0.3"

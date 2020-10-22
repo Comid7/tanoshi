@@ -88,6 +88,7 @@ async fn main() -> Result<()> {
             .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
     });
 
+    let cors = warp::cors().allow_any_origin().allow_method("POST");
     let routes = graphql_playground
         .or(graphql_post)
         .recover(|err: Rejection| async move {
@@ -102,7 +103,7 @@ async fn main() -> Result<()> {
                 "INTERNAL_SERVER_ERROR".to_string(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ))
-        });
+        }).with(cors);
 
     warp::serve(routes).run(([0, 0, 0, 0], config.port)).await;
 

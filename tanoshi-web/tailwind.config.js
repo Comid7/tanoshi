@@ -12,7 +12,11 @@ module.exports = {
             },
             spacing: {
                 '7/5': '141.5094339622642%',
+                'safe-top': 'calc(env(safe-area-inset-top) + .5rem)',
             },
+            gridTemplateColumns: {
+              '16': 'repeat(16, minmax(0, 1fr))',
+            }
         },
         container: {
             center: true,

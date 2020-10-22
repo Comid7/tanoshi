@@ -1,0 +1,15 @@
+query BrowseSource($sourceId: Int, $page:Int, $sortBy: SortByParam, $sortOrder: SortOrderParam) {
+  browseSource(sourceId:$sourceId, page:$page, sortBy: $sortBy, sortOrder: $sortOrder) {
+    id
+    title
+    coverUrl
+  }
+}
+
+query BrowseFavorites {
+  library {
+    id
+    title
+    coverUrl
+  }
+}
