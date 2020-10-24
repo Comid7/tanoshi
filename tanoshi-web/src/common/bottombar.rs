@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use futures::future::Future;
 
-use crate::cover::Cover;
+use super::Route;
 use crate::query::fetch_manga_from_source;
 pub struct Bottombar {
 }
@@ -38,37 +38,45 @@ impl Bottombar {
                     .class("flex")
                     .class("justify-evenly")
                     .children(&mut [
-                        svg!("svg", {
-                            .attribute("xmlns", "http://www.w3.org/2000/svg")
-                            .attribute("viewBox", "0 0 24 24")
-                            .attribute("stroke", "currentColor")
-                            .attribute("fill", "none")
-                            .class("w-6")
-                            .class("h-6")
+                        link!(Route::Library.url(), {
                             .children(&mut [
-                                svg!("path", {
-                                    .attribute("stroke-linecap", "round")
-                                    .attribute("stroke-linejoin", "round")
-                                    .attribute("stroke-width", "1")
-                                    .class("heroicon-ui")
-                                    .attribute("d", "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z")
+                                svg!("svg", {
+                                    .attribute("xmlns", "http://www.w3.org/2000/svg")
+                                    .attribute("viewBox", "0 0 24 24")
+                                    .attribute("stroke", "currentColor")
+                                    .attribute("fill", "none")
+                                    .class("w-6")
+                                    .class("h-6")
+                                    .children(&mut [
+                                        svg!("path", {
+                                            .attribute("stroke-linecap", "round")
+                                            .attribute("stroke-linejoin", "round")
+                                            .attribute("stroke-width", "1")
+                                            .class("heroicon-ui")
+                                            .attribute("d", "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z")
+                                        })
+                                    ])
                                 })
                             ])
                         }),
-                        svg!("svg", {
-                            .attribute("xmlns", "http://www.w3.org/2000/svg")
-                            .attribute("viewBox", "0 0 24 24")
-                            .attribute("stroke", "currentColor")
-                            .attribute("fill", "none")
-                            .class("w-6")
-                            .class("h-6")
+                        link!(Route::Catalogue(2).url(), {
                             .children(&mut [
-                                svg!("path", {
-                                    .attribute("stroke-linecap", "round")
-                                    .attribute("stroke-linejoin", "round")
-                                    .attribute("stroke-width", "1")
-                                    .class("heroicon-ui")
-                                    .attribute("d", "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10")
+                                svg!("svg", {
+                                    .attribute("xmlns", "http://www.w3.org/2000/svg")
+                                    .attribute("viewBox", "0 0 24 24")
+                                    .attribute("stroke", "currentColor")
+                                    .attribute("fill", "none")
+                                    .class("w-6")
+                                    .class("h-6")
+                                    .children(&mut [
+                                        svg!("path", {
+                                            .attribute("stroke-linecap", "round")
+                                            .attribute("stroke-linejoin", "round")
+                                            .attribute("stroke-width", "1")
+                                            .class("heroicon-ui")
+                                            .attribute("d", "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10")
+                                        })
+                                    ])
                                 })
                             ])
                         }),

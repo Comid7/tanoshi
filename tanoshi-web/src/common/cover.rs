@@ -24,7 +24,7 @@ impl Cover {
         })
     }
 
-    pub fn render(cover: Rc<Self>, app: Rc<App>) -> Dom {
+    pub fn render(cover: Rc<Self>) -> Dom {
         html!("div", {
             .class("cursor-pointer")
             .class("relative")

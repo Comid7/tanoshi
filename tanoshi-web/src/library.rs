@@ -6,26 +6,26 @@ use futures_signals::signal::{Mutable, Signal, SignalExt};
 use futures_signals::signal_vec::{MutableVec, SignalVec, SignalVecExt};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-use futures::future::Future;
 
-use crate::{utils::AsyncLoader, common::{Cover, Spinner}};
-use crate::query::fetch_manga_from_source;
-pub struct Catalogue {
+use crate::common::{Cover, Spinner};
+use crate::query::fetch_manga_from_favorite;
+use crate::utils::AsyncLoader;
+pub struct Library {
     loader: AsyncLoader,
     spinner: Rc<Spinner>,
     cover_list: MutableVec<Rc<Cover>>,
 }
 
-impl Catalogue {
+impl Library {
     pub fn new() -> Rc<Self> {
-        Rc::new(Catalogue {
+        Rc::new(Library {
             loader: AsyncLoader::new(),
             spinner: Spinner::new(),
             cover_list: MutableVec::new(),
         })
     }
 
-    pub fn render_topbar(catalogue: Rc<Self>) -> Dom {
+    pub fn render_topbar(library: Rc<Self>) -> Dom {
         html!("div", {
             .class("w-full")
             .class("px-2")
@@ -48,16 +48,19 @@ impl Catalogue {
                 }),
                 html!("span", {
                     .class("text-gray-300")
-                    .text("Catalogue")
+                    .text("Library")
                 }),
                 html!("button", {
                     .text("Refresh")
+                    .event(clone!(library => move |_: events::Click| {
+                        library.spinner.set_active(true);
+                    }))
                 })
             ])
         })
     }
 
-    pub fn render_main(catalogue: Rc<Self>) -> Dom {
+    pub fn render_main(library: Rc<Self>) -> Dom {
         html!("div", {
             .class("w-full")
             .class("mx-2")
@@ -68,23 +71,23 @@ impl Catalogue {
             .class("xl:grid-cols-12")
             .class("gap-2")
             .class("pt-12")
-            .children_signal_vec(catalogue.cover_list.signal_vec_cloned().map(clone!(catalogue => move |cover| Cover::render(cover.clone()))))
+            .children_signal_vec(library.cover_list.signal_vec_cloned().map(clone!(library => move |cover| Cover::render(cover.clone()))))
         })
     }
 
-    pub fn render(catalogue: Rc<Self>) -> Dom {
-        catalogue.spinner.set_active(true);
-        catalogue.loader.load(clone!(catalogue => async move {
-            let covers = fetch_manga_from_source().await.unwrap_throw();
-            let mut cover_list = catalogue.cover_list.lock_mut();
+    pub fn render(library: Rc<Self>) -> Dom {
+        library.spinner.set_active(true);
+        library.loader.load(clone!(library => async move {
+            let covers = fetch_manga_from_favorite().await.unwrap_throw();
+            let mut cover_list = library.cover_list.lock_mut();
             cover_list.replace_cloned(covers);
-            catalogue.spinner.set_active(false);
+            library.spinner.set_active(false);
         }));
         html!("div", {
             .children(&mut [
-                Self::render_topbar(catalogue.clone()),
-                Self::render_main(catalogue.clone()),
-                Spinner::render(catalogue.spinner.clone())
+                Self::render_topbar(library.clone()),
+                Self::render_main(library.clone()),
+                Spinner::render(library.spinner.clone())
             ])
         })
     }

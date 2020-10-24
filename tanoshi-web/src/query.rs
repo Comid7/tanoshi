@@ -1,4 +1,5 @@
 use futures::future::Future;
+use futures_signals::signal_vec::MutableVec;
 use graphql_client::{GraphQLQuery, Response};
 use std::error::Error;
 use wasm_bindgen::prelude::*;
@@ -6,7 +7,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::{future_to_promise, spawn_local, JsFuture};
 use std::rc::Rc;
 
-use crate::cover::Cover;
+use crate::common::Cover;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -29,9 +30,10 @@ pub async fn fetch_manga_from_source() -> Result<Vec<Rc<Cover>>, Box<dyn Error>>
     let response_body: Response<browse_source::ResponseData> = res.json().await?;
     let list = response_body.data.unwrap_throw().browse_source;
 
-    Ok(list.iter()
+    let covers = list.iter()
         .map(|item| Cover::new(item.id, item.title.clone(), item.cover_url.clone()))
-        .collect())
+        .collect();
+    Ok(covers)
 }
 
 #[derive(GraphQLQuery)]

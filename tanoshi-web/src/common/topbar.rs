@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use futures::future::Future;
 
-use crate::cover::Cover;
 use crate::query::fetch_manga_from_source;
 pub struct Topbar {
 }

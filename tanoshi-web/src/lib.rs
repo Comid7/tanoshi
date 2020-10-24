@@ -1,8 +1,12 @@
+extern crate log;
+
 use wasm_bindgen::prelude::*;
 
 mod query;
-mod cover;
 mod common;
+mod catalogue;
+mod library;
+mod utils;
 mod app;
 use app::App;
 
