@@ -6,7 +6,9 @@ use dominator::routing;
 #[derive(Debug)]
 pub enum Route {
     Library,
-    Catalogue(i32),
+    Catalogue(i64),
+    Manga(i64),
+    Chapter(i64),
     NotFound,
 }
 
@@ -21,7 +23,27 @@ impl Route {
             if paths.len() == 0 {
                 Route::Library
             } else if paths.len() == 2 {
-                Route::Catalogue(2)
+                match paths[0] {
+                    "catalogue" => {
+                        match paths[1].parse::<i64>() {
+                            Ok(id) => Route::Catalogue(id),
+                            Err(_) => Route::NotFound,
+                        }
+                    }
+                    "manga" => {
+                        match paths[1].parse::<i64>() {
+                            Ok(id) => Route::Manga(id),
+                            Err(_) => Route::NotFound,
+                        }
+                    },
+                    "chapter" => {
+                        match paths[1].parse::<i64>() {
+                            Ok(id) => Route::Chapter(id),
+                            Err(_) => Route::NotFound,
+                        }
+                    }
+                    _ => Route::NotFound,
+                }
             } else {
                 Route::NotFound
             }
@@ -31,7 +53,9 @@ impl Route {
     pub fn url(&self) -> String {
         match self {
             Route::Library => "/".to_string(),
-            Route::Catalogue(source_id) => format!("/catalogue/{}", source_id),
+            Route::Catalogue(source_id) => ["/catalogue".to_string(), source_id.to_string()].join("/"),
+            Route::Manga(manga_id) => ["/manga".to_string(), manga_id.to_string()].join("/"),
+            Route::Chapter(chapter_id) => ["/chapter".to_string(), chapter_id.to_string()].join("/"),
             Route::NotFound => "/notfound".to_string()
         }
     }

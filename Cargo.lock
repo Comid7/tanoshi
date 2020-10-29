@@ -2847,7 +2847,7 @@ dependencies = [
  "mime_guess",
  "pretty_env_logger",
  "rand 0.7.3",
- "rust-argon2",
+ "reqwest",
  "rust-embed",
  "serde",
  "serde_json",

@@ -30,6 +30,10 @@ type CatalogueRoot {
     # manga id
     id: Int!
   ): Manga
+  chapter(
+    # chapter id
+    id: Int!
+  ): Chapter
 }
 
 type CatalogueRoot_SourceRoot_MergedObjectTail {
@@ -56,13 +60,15 @@ type CatalogueRoot_SourceRoot_MergedObjectTail {
     # manga id
     id: Int!
   ): Manga
+  chapter(
+    # chapter id
+    id: Int!
+  ): Chapter
   installedSources: [Source!]!
 }
 
 type Chapter {
   id: Int!
-  sourceId: Int!
-  mangaId: Int!
   title: String!
   path: String!
   rank: Int!
@@ -71,6 +77,8 @@ type Chapter {
   readAt: NaiveDateTime
   uploaded: NaiveDateTime!
   dateAdded: NaiveDateTime!
+  source: Source!
+  manga: Manga!
   pages(
     # fetch from source
     fetch: Boolean! = false
@@ -153,6 +161,10 @@ type LibraryRoot_CatalogueRoot_SourceRoot_MergedObjectTail {
     # manga id
     id: Int!
   ): Manga
+  chapter(
+    # chapter id
+    id: Int!
+  ): Chapter
   installedSources: [Source!]!
 }
 
@@ -253,6 +265,10 @@ type QueryRoot {
     # manga id
     id: Int!
   ): Manga
+  chapter(
+    # chapter id
+    id: Int!
+  ): Chapter
   installedSources: [Source!]!
 }
 

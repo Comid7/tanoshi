@@ -1,12 +1,15 @@
 use std::rc::Rc;
 
-use dominator::{clone, events, html, with_node, Dom};
+use dominator::{Dom, clone, events, html, link, with_node};
 use futures_signals::map_ref;
 use futures_signals::signal::{Mutable, SignalExt};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::App;
+use crate::utils::proxied_image_url;
+
+use super::Route;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cover {
@@ -17,6 +20,7 @@ pub struct Cover {
 
 impl Cover {
     pub fn new(id: i64, title: String, cover_url: String) -> Rc<Self> {
+        let cover_url = proxied_image_url(&cover_url);
         Rc::new(Self {
             id,
             title,
@@ -24,12 +28,13 @@ impl Cover {
         })
     }
 
-    pub fn render(cover: Rc<Self>) -> Dom {
-        html!("div", {
+    pub fn render(cover: &Self) -> Dom {
+        link!(Route::Manga(cover.id).url(), {
             .class("cursor-pointer")
             .class("relative")
             .class("rounded-md")
             .class("pb-7/5")
+            .class("shadow")
             .children(&mut [
                 html!("img", {
                     .class("absolute")

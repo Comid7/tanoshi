@@ -25,7 +25,7 @@ impl Library {
         })
     }
 
-    pub fn render_topbar(library: Rc<Self>) -> Dom {
+    pub fn render_topbar(spinner: Rc<Spinner>) -> Dom {
         html!("div", {
             .class("w-full")
             .class("px-2")
@@ -52,18 +52,17 @@ impl Library {
                 }),
                 html!("button", {
                     .text("Refresh")
-                    .event(clone!(library => move |_: events::Click| {
-                        library.spinner.set_active(true);
+                    .event(clone!(spinner => move |_: events::Click| {
+                        spinner.set_active(true);
                     }))
                 })
             ])
         })
     }
 
-    pub fn render_main(library: Rc<Self>) -> Dom {
+    pub fn render_main(library: &Self) -> Dom {
         html!("div", {
             .class("w-full")
-            .class("mx-2")
             .class("grid")
             .class("grid-cols-3")
             .class("md:grid-cols-4")
@@ -71,7 +70,8 @@ impl Library {
             .class("xl:grid-cols-12")
             .class("gap-2")
             .class("pt-12")
-            .children_signal_vec(library.cover_list.signal_vec_cloned().map(clone!(library => move |cover| Cover::render(cover.clone()))))
+            .class("px-12")
+            .children_signal_vec(library.cover_list.signal_vec_cloned().map(clone!(library => move |cover| Cover::render(&cover))))
         })
     }
 
@@ -85,9 +85,9 @@ impl Library {
         }));
         html!("div", {
             .children(&mut [
-                Self::render_topbar(library.clone()),
-                Self::render_main(library.clone()),
-                Spinner::render(library.spinner.clone())
+                Self::render_topbar(library.spinner.clone()),
+                Self::render_main(&library),
+                Spinner::render(&library.spinner)
             ])
         })
     }

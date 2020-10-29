@@ -71,3 +71,10 @@ impl AsyncLoader {
         self.loading.signal_ref(|x| x.is_some())
     }
 }
+
+pub fn proxied_image_url(image_url: &str) -> String {
+    let mut url = String::with_capacity(1 + "/image?=".len() + image_url.len());
+    url.push_str("/image?url=");
+    url.push_str(image_url);
+    url
+}

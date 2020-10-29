@@ -1,4 +1,3 @@
-extern crate argon2;
 extern crate libloading as lib;
 extern crate pretty_env_logger;
 #[macro_use]
@@ -9,11 +8,7 @@ extern crate lazy_static;
 // mod auth;
 mod config;
 mod extension;
-// mod favorites;
-// mod filters;
-// mod handlers;
-// mod history;
-// mod update;
+mod proxy;
 mod catalogue;
 mod context;
 mod db;
@@ -69,7 +64,7 @@ async fn main() -> Result<()> {
         MutationRoot::default(),
         EmptySubscription::default(),
     )
-    .extension(ApolloTracing)
+    //.extension(ApolloTracing)
     .data(GlobalContext::new(pool, extensions))
     .finish();
 
@@ -89,8 +84,9 @@ async fn main() -> Result<()> {
     });
 
     let cors = warp::cors().allow_any_origin().allow_method("POST");
-    let routes = graphql_playground
+    let routes = proxy::proxy()
         .or(graphql_post)
+        .or(graphql_playground)
         .recover(|err: Rejection| async move {
             if let Some(BadRequest(err)) = err.find() {
                 return Ok::<_, Infallible>(warp::reply::with_status(

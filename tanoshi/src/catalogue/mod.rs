@@ -104,4 +104,13 @@ impl CatalogueRoot {
             None
         }
     }
+
+    async fn chapter(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "chapter id")] id: i64,
+    ) -> Option<Chapter> {
+        let db = ctx.data_unchecked::<GlobalContext>().db.clone();
+        db.get_chapter_by_id(id).await
+    }
 }

@@ -1,4 +1,4 @@
-use super::{Manga, Page};
+use super::{Manga, Page, Source};
 use crate::context::GlobalContext;
 use crate::db::Db;
 use async_graphql::futures::{stream, StreamExt};
@@ -44,14 +44,6 @@ impl Chapter {
         self.id
     }
 
-    async fn source_id(&self) -> i64 {
-        self.source_id
-    }
-
-    async fn manga_id(&self) -> i64 {
-        self.manga_id
-    }
-
     async fn title(&self) -> String {
         self.title.clone()
     }
@@ -84,6 +76,27 @@ impl Chapter {
         self.date_added
     }
 
+    async fn source(&self, ctx: &Context<'_>) -> Source {
+        let ext = ctx
+            .data_unchecked::<GlobalContext>()
+            .extensions
+            .get(self.source_id)
+            .unwrap();
+        Source {
+            id: ext.detail().id,
+            name: ext.detail().name.clone(),
+            version: ext.detail().version.clone(),
+        }
+    }
+
+    async fn manga(&self, ctx: &Context<'_>) -> Manga {
+        ctx.data_unchecked::<GlobalContext>()
+            .db
+            .get_manga_by_id(self.manga_id)
+            .await
+            .unwrap()
+    }
+
     async fn pages(
         &self,
         ctx: &Context<'_>,
@@ -97,10 +110,24 @@ impl Chapter {
         let mut result = if !fetch {
             db.get_pages_by_chapter_id(chapter_id).await
         } else {
-            fetch_pages(ctx.data_unchecked::<GlobalContext>(), self.path.clone(), source_id, manga_id, chapter_id).await
+            fetch_pages(
+                ctx.data_unchecked::<GlobalContext>(),
+                self.path.clone(),
+                source_id,
+                manga_id,
+                chapter_id,
+            )
+            .await
         };
         if let Err(_) = result {
-            result = fetch_pages(ctx.data_unchecked::<GlobalContext>(), self.path.clone(), source_id, manga_id, chapter_id).await;
+            result = fetch_pages(
+                ctx.data_unchecked::<GlobalContext>(),
+                self.path.clone(),
+                source_id,
+                manga_id,
+                chapter_id,
+            )
+            .await;
         }
         result.unwrap_or(vec![])
     }

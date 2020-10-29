@@ -60,7 +60,6 @@ impl Catalogue {
     pub fn render_main(catalogue: Rc<Self>) -> Dom {
         html!("div", {
             .class("w-full")
-            .class("mx-2")
             .class("grid")
             .class("grid-cols-3")
             .class("md:grid-cols-4")
@@ -68,23 +67,27 @@ impl Catalogue {
             .class("xl:grid-cols-12")
             .class("gap-2")
             .class("pt-12")
-            .children_signal_vec(catalogue.cover_list.signal_vec_cloned().map(clone!(catalogue => move |cover| Cover::render(cover.clone()))))
+            .children_signal_vec(catalogue.cover_list.signal_vec_cloned().map(clone!(catalogue => move |cover| Cover::render(&cover))))
         })
     }
 
-    pub fn render(catalogue: Rc<Self>) -> Dom {
+    pub fn fetch_mangas(catalogue: Rc<Self>, source_id: i64) {
         catalogue.spinner.set_active(true);
         catalogue.loader.load(clone!(catalogue => async move {
-            let covers = fetch_manga_from_source().await.unwrap_throw();
+            let covers = fetch_manga_from_source(source_id).await.unwrap_throw();
             let mut cover_list = catalogue.cover_list.lock_mut();
             cover_list.replace_cloned(covers);
             catalogue.spinner.set_active(false);
         }));
+    }
+
+    pub fn render(catalogue: Rc<Self>, source_id: i64) -> Dom {
+        Self::fetch_mangas(catalogue.clone(), source_id);
         html!("div", {
             .children(&mut [
                 Self::render_topbar(catalogue.clone()),
                 Self::render_main(catalogue.clone()),
-                Spinner::render(catalogue.spinner.clone())
+                Spinner::render(&catalogue.spinner)
             ])
         })
     }

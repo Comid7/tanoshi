@@ -13,3 +13,37 @@ query BrowseFavorites {
     coverUrl
   }
 }
+
+query FetchMangaDetail($id: Int) {
+  manga(id: $id) {
+    id
+    title
+    author
+    genre
+    coverUrl
+    description
+    status
+    chapters {
+      id
+      title
+      uploaded
+      readAt
+    }
+  }
+}
+
+query FetchChapter($chapterId:Int) {
+  chapter(id: $chapterId) {
+      title
+      prev
+      next
+    manga {
+      id
+      title
+    }
+    pages {
+       id
+       url
+    }
+  }
+}

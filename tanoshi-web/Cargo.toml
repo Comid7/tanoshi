@@ -47,7 +47,8 @@ features = [
   'EventSource',
   'MessageEvent',
   'Location',
-  'FocusEvent'
+  'FocusEvent',
+  'ErrorEvent',
 ]
 
 [dev-dependencies]

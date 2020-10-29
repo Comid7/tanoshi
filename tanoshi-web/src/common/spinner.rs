@@ -24,7 +24,7 @@ impl Spinner {
         self.fullscreen.set_neq(fullscreen);
     }
 
-    pub fn render(spinner: Rc<Self>) -> Dom {
+    pub fn render(spinner: &Self) -> Dom {
         html!("div", {
             .class_signal([
                 "w-full",
