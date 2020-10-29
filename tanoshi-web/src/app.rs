@@ -15,10 +15,6 @@ use crate::manga::Manga;
 use crate::reader::Reader;
 
 pub struct App {
-    pub library_page: Rc<Library>,
-    pub catalogue_page: Rc<Catalogue>,
-    pub manga_page: Rc<Manga>,
-    pub reader_page: Rc<Reader>,
     pub spinner: Rc<Spinner>,
     pub loader: AsyncLoader,
 }
@@ -26,10 +22,6 @@ pub struct App {
 impl App {
     pub fn new() -> Rc<Self> {
         Rc::new(App {
-            library_page: Library::new(),
-            catalogue_page: Catalogue::new(),
-            manga_page: Manga::new(),
-            reader_page: Reader::new(),
             spinner: Spinner::new(),
             loader: AsyncLoader::new(),
         })
@@ -41,18 +33,18 @@ impl App {
             .children_signal_vec(Route::signal().map(move |x| { 
                 match x {
                     Route::Library => vec![
-                        Library::render(app.library_page.clone()),
+                        Library::render(Library::new()),
                         Bottombar::render()
                     ],
                     Route::Catalogue(source_id) => vec![
-                        Catalogue::render(app.catalogue_page.clone(), source_id),
+                        Catalogue::render(Catalogue::new(source_id)),
                         Bottombar::render()
                     ],
                     Route::Manga(manga_id) => vec![
-                        Manga::render(app.manga_page.clone(), app.spinner.clone(), manga_id),
+                        Manga::render(Manga::new(manga_id), app.spinner.clone()),
                     ],
                     Route::Chapter(chapter_id) => vec![
-                        Reader::render(app.clone(), chapter_id),
+                        Reader::render(Reader::new(chapter_id), app.clone()),
                     ],
                     Route::NotFound => vec![
                         Self::render(app.clone()),

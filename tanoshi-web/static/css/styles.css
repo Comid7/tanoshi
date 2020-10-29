@@ -93,3 +93,8 @@
 ::-webkit-scrollbar-thumb:window-inactive {
     background:rgba(0,0,0,0.05);
 }
+
+.main {
+  margin-top: calc(env(safe-area-inset-top) + theme('spacing.12'));
+  height: 100vh;
+}

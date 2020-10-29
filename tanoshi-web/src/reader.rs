@@ -9,6 +9,7 @@ use std::rc::Rc;
 use web_sys::window;
 
 pub struct Reader {
+    pub chapter_id: i64,
     pub manga_id: Mutable<i64>,
     pub manga_title: Mutable<String>,
     pub chapter_title: Mutable<String>,
@@ -18,8 +19,9 @@ pub struct Reader {
 }
 
 impl Reader {
-    pub fn new() -> Rc<Self> {
+    pub fn new(chapter_id: i64) -> Rc<Self> {
         Rc::new(Self {
+            chapter_id,
             manga_id: Mutable::new(0),
             manga_title: Mutable::new("".to_string()),
             chapter_title: Mutable::new("".to_string()),
@@ -29,14 +31,12 @@ impl Reader {
         })
     }
 
-    pub fn fetch_detail(app: Rc<App>, chapter_id: i64) {
-        let reader = app.reader_page.clone();
+    pub fn fetch_detail(reader: Rc<Self>, app: Rc<App>) {
         let spinner = app.spinner.clone();
-
-        spinner.set_active(true);
-        spinner.set_fullscreen(true);
+        app.spinner.set_active(true);
+        app.spinner.set_fullscreen(true);
         app.loader.load(clone!(reader => async move {
-            match fetch_chapter(chapter_id).await {
+            match fetch_chapter(reader.chapter_id).await {
                 Ok(result) => {
                     reader.manga_id.set(result.manga.id);
                     reader.manga_title.set(result.manga.title);
@@ -54,8 +54,7 @@ impl Reader {
         }));
     }
 
-    pub fn render_topbar(app: Rc<App>) -> Dom {
-        let reader = app.reader_page.clone();
+    pub fn render_topbar(reader: Rc<Self>) -> Dom {
         html!("div", {
             .class([
                 "flex",
@@ -79,6 +78,7 @@ impl Reader {
             ])
             .children(&mut [
                 html!("button", {
+                    .class("mx-2")
                     .children(&mut [
                         svg!("svg", {
                             .attribute("xmlns", "http://www.w3.org/2000/svg")
@@ -110,6 +110,7 @@ impl Reader {
                     .text_signal(reader.chapter_title.signal_cloned().map(|t| t))
                 }),
                 html!("button", {
+                    .class("mx-2")
                     .children(&mut [
                         svg!("svg", {
                             .attribute("xmlns", "http://www.w3.org/2000/svg")
@@ -141,27 +142,25 @@ impl Reader {
         })
     }
 
-    pub fn render_pages(app: Rc<App>) -> Dom {
-        let reader = app.reader_page.clone();
+    pub fn render_pages(reader: Rc<Self>) -> Dom {
         html!("div", {
-            .children_signal_vec(reader.pages.signal_vec_cloned().map(clone!( app => move |page|
+            .children_signal_vec(reader.pages.signal_vec_cloned().map(|page|
                 html!("img", {
                     .attribute("src", &proxied_image_url(&page))
-                    .event(clone!(app => move |_: events::Error| {
+                    .event(|_: events::Error| {
                         log::error!("error loading image");
-                    }))
+                    })
                 })
-
-            )))
+            ))
         })
     }
 
-    pub fn render(app: Rc<App>, chapter_id: i64) -> Dom {
-        Self::fetch_detail(app.clone(), chapter_id);
+    pub fn render(reader: Rc<Self>, app: Rc<App>) -> Dom {
+        Self::fetch_detail(reader.clone(), app.clone());
         html!("div", {
             .children(&mut [
-                Self::render_topbar(app.clone()),
-                Self::render_pages(app.clone()),
+                Self::render_topbar(reader.clone()),
+                Self::render_pages(reader.clone()),
                 Spinner::render(&app.spinner)
             ])
         })

@@ -11,14 +11,16 @@ use futures::future::Future;
 use crate::{utils::AsyncLoader, common::{Cover, Spinner}};
 use crate::query::fetch_manga_from_source;
 pub struct Catalogue {
+    pub source_id: i64,
     loader: AsyncLoader,
     spinner: Rc<Spinner>,
     cover_list: MutableVec<Rc<Cover>>,
 }
 
 impl Catalogue {
-    pub fn new() -> Rc<Self> {
+    pub fn new(source_id: i64) -> Rc<Self> {
         Rc::new(Catalogue {
+            source_id,
             loader: AsyncLoader::new(),
             spinner: Spinner::new(),
             cover_list: MutableVec::new(),
@@ -66,24 +68,25 @@ impl Catalogue {
             .class("lg:grid-cols-6")
             .class("xl:grid-cols-12")
             .class("gap-2")
-            .class("pt-12")
+            .class("pb-safe-bottom-scroll")
             .children_signal_vec(catalogue.cover_list.signal_vec_cloned().map(clone!(catalogue => move |cover| Cover::render(&cover))))
         })
     }
 
-    pub fn fetch_mangas(catalogue: Rc<Self>, source_id: i64) {
+    pub fn fetch_mangas(catalogue: Rc<Self>) {
         catalogue.spinner.set_active(true);
         catalogue.loader.load(clone!(catalogue => async move {
-            let covers = fetch_manga_from_source(source_id).await.unwrap_throw();
+            let covers = fetch_manga_from_source(catalogue.source_id).await.unwrap_throw();
             let mut cover_list = catalogue.cover_list.lock_mut();
             cover_list.replace_cloned(covers);
             catalogue.spinner.set_active(false);
         }));
     }
 
-    pub fn render(catalogue: Rc<Self>, source_id: i64) -> Dom {
-        Self::fetch_mangas(catalogue.clone(), source_id);
+    pub fn render(catalogue: Rc<Self>) -> Dom {
+        Self::fetch_mangas(catalogue.clone());
         html!("div", {
+            .class("main")
             .children(&mut [
                 Self::render_topbar(catalogue.clone()),
                 Self::render_main(catalogue.clone()),

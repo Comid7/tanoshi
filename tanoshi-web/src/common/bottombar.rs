@@ -34,7 +34,8 @@ impl Bottombar {
                 "dark:bg-gray-900",
                 "p-3", 
                 "flex", 
-                "justify-evenly"
+                "justify-evenly",
+                "pb-safe-bottom"
             ])
             .children(&mut [
                 link!(Route::Library.url(), {

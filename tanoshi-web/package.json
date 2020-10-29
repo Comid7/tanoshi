@@ -28,5 +28,8 @@
     "websocket-extensions": ">=0.1.4",
     "node-forge": "^0.10.0",
     "iltorb": "2.4.5"
+  },
+  "dependencies": {
+    "animate.css": "^4.1.1"
   }
 }

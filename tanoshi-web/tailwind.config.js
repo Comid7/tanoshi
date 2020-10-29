@@ -13,6 +13,8 @@ module.exports = {
             spacing: {
                 '7/5': '141.5094339622642%',
                 'safe-top': 'calc(env(safe-area-inset-top) + .5rem)',
+                'safe-bottom': 'calc(env(safe-area-inset-bottom) + .5rem)',
+                'safe-bottom-scroll': 'calc(env(safe-area-inset-bottom) + 3rem)'
             },
             gridTemplateColumns: {
               '16': 'repeat(16, minmax(0, 1fr))',

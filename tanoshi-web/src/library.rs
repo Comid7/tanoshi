@@ -69,8 +69,7 @@ impl Library {
             .class("lg:grid-cols-6")
             .class("xl:grid-cols-12")
             .class("gap-2")
-            .class("pt-12")
-            .class("px-12")
+            .class("pb-safe-bottom-scroll")
             .children_signal_vec(library.cover_list.signal_vec_cloned().map(clone!(library => move |cover| Cover::render(&cover))))
         })
     }
@@ -84,6 +83,7 @@ impl Library {
             library.spinner.set_active(false);
         }));
         html!("div", {
+            .class("main")
             .children(&mut [
                 Self::render_topbar(library.spinner.clone()),
                 Self::render_main(&library),
