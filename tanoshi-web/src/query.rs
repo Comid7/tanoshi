@@ -108,3 +108,41 @@ pub async fn fetch_chapter(chapter_id: i64) -> Result<fetch_chapter::FetchChapte
 
     Ok(manga)
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.graphql",
+    query_path = "graphql/query.graphql",
+    response_derives = "Debug"
+)]
+pub struct AddToLibrary;
+
+pub async fn add_to_library(manga_id: i64) -> Result<(), Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let var = add_to_library::Variables{
+        manga_id: Some(manga_id),
+    };
+    let request_body = AddToLibrary::build_query(var);
+    let _ = client.post(&graphql_url()).json(&request_body).send().await?;
+
+    Ok(())
+}
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.graphql",
+    query_path = "graphql/query.graphql",
+    response_derives = "Debug"
+)]
+pub struct DeleteFromLibrary;
+
+pub async fn delete_from_library(manga_id: i64) -> Result<(), Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let var = delete_from_library::Variables{
+        manga_id: Some(manga_id),
+    };
+    let request_body = DeleteFromLibrary::build_query(var);
+    let _ = client.post(&graphql_url()).json(&request_body).send().await?;
+
+    Ok(())
+}

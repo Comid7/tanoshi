@@ -59,10 +59,12 @@ impl CatalogueRoot {
             .get_mangas(keyword, genres, page, sort_by, sort_order, None)
             .await
             .unwrap();
-        let mangas_stream = stream::iter(mangas);
-        let mangas_stream = mangas_stream.then(|m| async {
+        let mangas_stream = stream::iter(mangas).then(|m| async {
             match db.get_manga_by_source_path(source_id, &m.path).await {
-                Some(manga) => manga,
+                Some(manga) => {
+                    info!("found {} {}", manga.id, manga.is_favorite);
+                    manga
+                },
                 None => {
                     let mut manga: Manga = m.into();
                     let manga_id = db.insert_manga(&manga).await.unwrap();

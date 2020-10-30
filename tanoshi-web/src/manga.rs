@@ -1,4 +1,4 @@
-use crate::query::fetch_manga_detail;
+use crate::query::{fetch_manga_detail, add_to_library, delete_from_library};
 use crate::utils::{proxied_image_url, AsyncLoader};
 use crate::{
     app::App,
@@ -31,6 +31,7 @@ pub struct Manga {
     cover_url: Mutable<Option<String>>,
     description: Mutable<Option<String>>,
     status: Mutable<Option<String>>,
+    is_favorite: Mutable<bool>,
     chapters: MutableVec<Chapter>,
     loader: AsyncLoader,
 }
@@ -45,6 +46,7 @@ impl Manga {
             cover_url: Mutable::new(None),
             description: Mutable::new(None),
             status: Mutable::new(None),
+            is_favorite: Mutable::new(false),
             chapters: MutableVec::new(),
             loader: AsyncLoader::new(),
         })
@@ -62,6 +64,7 @@ impl Manga {
                     manga.cover_url.lock_mut().replace(result.cover_url);
                     manga.description.lock_mut().replace(result.description.unwrap_throw());
                     manga.status.lock_mut().replace(result.status.unwrap_throw());
+                    manga.is_favorite.set_neq(result.is_favorite);
                     manga.chapters.lock_mut().replace_cloned(result.chapters.iter().map(|chapter| Chapter{
                         id: chapter.id,
                         title: chapter.title.clone(),
@@ -75,6 +78,30 @@ impl Manga {
             }
 
             spinner.set_active(false);
+        }));
+    }
+
+    pub fn add_to_or_remove_from_library(manga: Rc<Self>) {
+        manga.loader.load(clone!(manga => async move {
+            if manga.is_favorite.get() {
+                match delete_from_library(manga.id).await {
+                    Ok(_) => {
+                        manga.is_favorite.set_neq(false);
+                    },
+                    Err(err) => {
+                        log::error!("{}", err);
+                    }
+                }
+            } else {
+                match add_to_library(manga.id).await {
+                    Ok(_) => {
+                        manga.is_favorite.set_neq(true);
+                    },
+                    Err(err) => {
+                        log::error!("{}", err);
+                    }
+                }
+            }
         }));
     }
 
@@ -194,7 +221,7 @@ impl Manga {
         })
     }
 
-    pub fn render_description(manga: &Self) -> Dom {
+    pub fn render_description(manga: Rc<Self>) -> Dom {
         html!("div", {
             .attribute("id", "description")
             .class([
@@ -212,6 +239,34 @@ impl Manga {
                 "shadow",
             ])
             .children(&mut [
+                html!("div", {
+                    .class("flex")
+                    .children(&mut [
+                        html!("button", {
+                            .class(["rounded", "p-2", "border"])
+                            .children(&mut [
+                                svg!("svg", {
+                                    .attribute("xmlns", "http://www.w3.org/2000/svg")
+                                    .attribute_signal("fill", manga.is_favorite.signal().map(|x| if x { "currentColor" } else { "none" }))
+                                    .attribute("viewBox", "0 0 24 24")
+                                    .attribute("stroke", "currentColor")
+                                    .class(["w-6", "h-6"])
+                                    .children(&mut [
+                                        svg!("path", {
+                                            .attribute("stroke-linecap", "round")
+                                            .attribute("stroke-linejoin", "round")
+                                            .attribute("stroke-width", "1")
+                                            .attribute("d", "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z")
+                                        })
+                                    ])
+                                })
+                            ])
+                            .event(clone!(manga => move |_: events::Click| {
+                                Self::add_to_or_remove_from_library(manga.clone());
+                            }))
+                        })
+                    ])
+                }),
                 html!("span", {
                     .class(["md:text-xl", "sm:text-base", "font-bold", "text-gray-900", "dark:text-gray-300"])
                     .text("Description")
@@ -310,7 +365,7 @@ impl Manga {
             .children(&mut [
                 Self::render_topbar(&manga_page),
                 Self::render_header(&manga_page),
-                Self::render_description(&manga_page),
+                Self::render_description(manga_page.clone()),
                 html!("div", {
                     .class("pb-safe-bottom-scroll")
                     .children(&mut [

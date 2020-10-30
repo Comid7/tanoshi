@@ -46,8 +46,8 @@ impl Db {
                 description: row.get(6),
                 path: row.get(7),
                 cover_url: row.get(8),
-                last_read_chapter: row.get(9),
-                is_favorite: row.get(10),
+                is_favorite: row.get(9),
+                last_read_chapter: row.get(10),
                 date_added: row.get(11),
             })
         } else {
@@ -82,8 +82,8 @@ impl Db {
                 description: row.get(6),
                 path: row.get(7),
                 cover_url: row.get(8),
-                last_read_chapter: row.get(9),
-                is_favorite: row.get(10),
+                is_favorite: row.get(9),
+                last_read_chapter: row.get(10),
                 date_added: row.get(11),
             })
         } else {

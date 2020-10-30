@@ -3,6 +3,7 @@ query BrowseSource($sourceId: Int, $page:Int, $sortBy: SortByParam, $sortOrder: 
     id
     title
     coverUrl
+    isFavorite
   }
 }
 
@@ -23,6 +24,7 @@ query FetchMangaDetail($id: Int) {
     coverUrl
     description
     status
+    isFavorite
     chapters {
       id
       title
@@ -46,4 +48,12 @@ query FetchChapter($chapterId:Int) {
        url
     }
   }
+}
+
+mutation AddToLibrary($mangaId: Int) {
+  addToLibrary(mangaId: $mangaId)
+}
+
+mutation DeleteFromLibrary($mangaId: Int) {
+  deleteFromLibrary(mangaId: $mangaId)
 }
