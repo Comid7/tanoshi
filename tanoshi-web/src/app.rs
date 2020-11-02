@@ -29,7 +29,6 @@ impl App {
 
     pub fn render(app: Rc<Self>) -> Dom {
         html!("div", {
-            .class("px-2")
             .children_signal_vec(Route::signal().map(move |x| { 
                 match x {
                     Route::Library => vec![

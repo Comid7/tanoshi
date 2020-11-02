@@ -28,7 +28,12 @@ module.exports = {
         backgroundColor: ['dark', 'hover', 'focus', 'disabled'],
         textColor: ['dark', 'hover', 'focus', 'disabled'],
     },
-    plugins: [],
+    plugins: [
+        require('tailwindcss-animatecss')({
+            classes: ['animate__animated', 'animate__slideInDown', 'animate__slideOutUp'],
+            variants: ['responsive', 'hover'],
+          }),
+    ],
     dark: 'class',
     experimental: {
         darkModeVariant: true,

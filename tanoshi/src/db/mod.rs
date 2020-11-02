@@ -419,8 +419,8 @@ impl Db {
         let stream = sqlx::query(
             r#"
             SELECT *, 
-            (SELECT c.id FROM chapter c WHERE c.manga_id = 21 AND c.rank = chapter.rank - 1) prev,
-            (SELECT c.id FROM chapter c WHERE c.manga_id = 21 AND c.rank = chapter.rank + 1) next 
+            (SELECT c.id FROM chapter c WHERE c.manga_id = chapter.manga_id AND c.rank = chapter.rank - 1) prev,
+            (SELECT c.id FROM chapter c WHERE c.manga_id = chapter.manga_id AND c.rank = chapter.rank + 1) next 
             FROM chapter WHERE id = ?"#,
         )
         .bind(id)
@@ -455,8 +455,8 @@ impl Db {
         let stream = sqlx::query(
             r#"
             SELECT *,
-            (SELECT c.id FROM chapter c WHERE c.manga_id = 21 AND c.rank = chapter.rank - 1) prev,
-            (SELECT c.id FROM chapter c WHERE c.manga_id = 21 AND c.rank = chapter.rank + 1) next 
+            (SELECT c.id FROM chapter c WHERE c.manga_id = chapter.manga_id AND c.rank = chapter.rank - 1) prev,
+            (SELECT c.id FROM chapter c WHERE c.manga_id = chapter.manga_id AND c.rank = chapter.rank + 1) next 
             FROM chapter WHERE source_id = ? AND path = ?"#,
         )
         .bind(source_id)

@@ -1,7 +1,7 @@
 use dominator::traits::StaticEvent;
 use wasm_bindgen::JsCast;
 
-pub use dominator::events::Click;
+pub use dominator::events::*;
 
 pub struct Error {
     event: web_sys::ErrorEvent,

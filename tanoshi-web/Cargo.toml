@@ -36,6 +36,7 @@ version = "0.3"
 features = [
   'Document',
   'Element',
+  'HtmlCollection',
   'HtmlElement',
   'HtmlImageElement',
   'Node',

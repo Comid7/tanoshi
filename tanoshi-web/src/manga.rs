@@ -361,7 +361,7 @@ impl Manga {
     pub fn render(manga_page: Rc<Self>, spinner: Rc<Spinner>) -> Dom {
         Self::fetch_detail(manga_page.clone(), spinner.clone());
         html!("div", {
-            .class(["main", "w-full", "lg:w-1/2", "mx-auto"])
+            .class(["main", "w-full", "lg:w-1/2", "mx-auto", "px-2"])
             .children(&mut [
                 Self::render_topbar(&manga_page),
                 Self::render_header(&manga_page),

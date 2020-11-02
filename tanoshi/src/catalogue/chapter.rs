@@ -1,7 +1,7 @@
 use super::{Manga, Page, Source};
 use crate::context::GlobalContext;
 use crate::db::Db;
-use async_graphql::futures::{stream, StreamExt};
+use futures::{stream, StreamExt};
 use async_graphql::{Context, Object, Result, Schema, Subscription, ID};
 use chrono::NaiveDateTime;
 

@@ -1,6 +1,6 @@
 use super::Chapter;
 use crate::context::GlobalContext;
-use async_graphql::futures::{stream, StreamExt};
+use futures::{stream, StreamExt};
 use async_graphql::{Context, Object};
 
 /// A type represent manga details, normalized across source
