@@ -1,5 +1,10 @@
+const colors = require('tailwindcss/colors')
+
 module.exports = {
     theme: {
+        colors: {
+            gray: colors.trueGray,
+        },
         extend: {
             colors: {
                 'accent': '#5b749b',
@@ -27,6 +32,7 @@ module.exports = {
     variants: {
         backgroundColor: ['dark', 'hover', 'focus', 'disabled'],
         textColor: ['dark', 'hover', 'focus', 'disabled'],
+        divideColor: ['dark']
     },
     plugins: [
         require('tailwindcss-animatecss')({
@@ -34,7 +40,7 @@ module.exports = {
             variants: ['responsive', 'hover'],
           }),
     ],
-    dark: 'class',
+    darkMode: 'media',
     experimental: {
         darkModeVariant: true,
     }

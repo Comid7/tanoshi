@@ -25,7 +25,7 @@ pub async fn main_js() -> Result<(), JsValue> {
         .body()
         .unwrap_throw()
         .class_list()
-        .add_2("bg-white", "dark:bg-black")
+        .add_2("bg-gray-50", "dark:bg-gray-900")
         .unwrap_throw();
     dominator::append_dom(&dominator::body(), App::render(App::new()));
 

@@ -41,9 +41,11 @@ impl Library {
             .class("top-0")
             .class("z-50")
             .class("bg-accent")
+            .class("dark:bg-gray-900")
             .class("border-b")
             .class("border-accent-darker")
-            .class("text-white")
+            .class("dark:border-gray-800")
+            .class("text-gray-50")
             .class("pt-safe-top")
             .children(&mut [
                 html!("button", {
@@ -72,11 +74,9 @@ impl Library {
                     "lg:grid-cols-6",
                     "xl:grid-cols-12",
                     "gap-2",
-                    "sm:px-2",
+                    "px-2",
                     "lg:pr-2",
-                    "lg:pl-48",
-                    "ml-0",
-                    "lg:ml-2",
+                    "lg:pl-52",
                     "pb-safe-bottom-scroll"
             ])
             .children_signal_vec(library.cover_list.signal_vec_cloned().map(clone!(library => move |cover| Cover::render(&cover))))

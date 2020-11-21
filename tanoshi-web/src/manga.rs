@@ -119,9 +119,11 @@ impl Manga {
                 "top-0",
                 "z-50",
                 "bg-accent",
+                "dark:bg-gray-900",
                 "border-b",
                 "border-accent-darker",
-                "text-white",
+                "dark:border-gray-800",
+                "text-gray-50",
                 "pt-safe-top",
                 "flex"
             ])
@@ -166,8 +168,8 @@ impl Manga {
                 "border", 
                 "border-gray-300", 
                 "dark:border-gray-700", 
-                "bg-white", 
-                "dark:bg-gray-900", 
+                "bg-gray-100", 
+                "dark:bg-gray-800", 
                 "p-2", 
                 "mb-2", 
                 "rounded",
@@ -231,8 +233,8 @@ impl Manga {
                 "border", 
                 "border-gray-300", 
                 "dark:border-gray-700", 
-                "bg-white",
-                "dark:bg-gray-900", 
+                "bg-gray-100",
+                "dark:bg-gray-800", 
                 "p-2", 
                 "mb-2",
                 "rounded",
@@ -243,7 +245,7 @@ impl Manga {
                     .class("flex")
                     .children(&mut [
                         html!("button", {
-                            .class(["rounded", "p-2", "border"])
+                            .class(["rounded", "p-2", "border", "text-gray-900", "dark:text-gray-50"])
                             .children(&mut [
                                 svg!("svg", {
                                     .attribute("xmlns", "http://www.w3.org/2000/svg")
@@ -297,15 +299,16 @@ impl Manga {
                 "border", 
                 "border-gray-300", 
                 "dark:border-gray-700", 
-                "bg-white", 
-                "dark:bg-gray-900", 
+                "bg-gray-100", 
+                "dark:bg-gray-800", 
                 "p-2",
                 "rounded",
-                "shadow"
+                "shadow",
+                "over"
             ])
             .children(&mut [
                 html!("div", {
-                    .class(["flex", "flex-col", "w-full", "divide-y-2", "dark:divide-gray-900", "divide-gray-300"])
+                    .class(["flex", "flex-col", "w-full", "divide-y-2", "dark:divide-gray-700", "divide-gray-300"])
                     .children(&mut [
                         html!("span", {
                             .class(["md:text-xl", "sm:text-base", "font-bold", "text-gray-900", "dark:text-gray-300"])
@@ -361,13 +364,39 @@ impl Manga {
     pub fn render(manga_page: Rc<Self>, spinner: Rc<Spinner>) -> Dom {
         Self::fetch_detail(manga_page.clone(), spinner.clone());
         html!("div", {
-            .class(["main", "w-full", "lg:w-1/2", "mx-auto", "px-2"])
+            .class(["main", "w-full", "mx-auto", "px-2", "flex", "flex-col", "lg:flex-row"])
             .children(&mut [
                 Self::render_topbar(&manga_page),
-                Self::render_header(&manga_page),
-                Self::render_description(manga_page.clone()),
                 html!("div", {
-                    .class("pb-safe-bottom-scroll")
+                    .class([
+                        "hidden",
+                        "lg:block",
+                        "w-0",
+                        "lg:w-1/3"
+                    ])
+                }),
+                html!("div", {
+                    .class([
+                        "w-full",
+                        "lg:w-1/3",
+                        "h-screen",
+                        "static",
+                        "lg:fixed"
+                    ])
+                    .children(&mut [
+                        Self::render_header(&manga_page),
+                        Self::render_description(manga_page.clone()),
+                    ])
+                }),
+                html!("div", {
+                    .class([
+                        "w-full",
+                        "lg:w-2/3",
+                        "h-screen",
+                        "pb-safe-bottom-scroll",
+                        "pl-0",
+                        "lg:pl-4"
+                    ])
                     .children(&mut [
                         Self::render_chapters(&manga_page),
                     ])

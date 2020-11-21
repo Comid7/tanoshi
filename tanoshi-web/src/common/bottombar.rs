@@ -34,8 +34,8 @@ impl Bottombar {
                 "border-gray-300",
                 "dark:border-gray-700",
                 "safe-bottom",
-                "bg-white",
-                "dark:bg-gray-900",
+                "bg-gray-100",
+                "dark:bg-gray-800",
                 "p-3",
                 "flex", 
                 "lg:flex-col", 
@@ -48,7 +48,9 @@ impl Bottombar {
                     .class([
                         "flex",
                         "rounded",
-                        "px-2"
+                        "px-2",
+                        "text-gray-900",
+                        "dark:text-gray-50"
                     ])
                     .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
                         Route::Library => true,
@@ -88,7 +90,9 @@ impl Bottombar {
                     .class([
                         "flex",
                         "rounded",
-                        "px-2"
+                        "px-2",
+                        "text-gray-900",
+                        "dark:text-gray-50"
                     ])
                     .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
                         Route::Catalogue(_) => true,
@@ -128,7 +132,9 @@ impl Bottombar {
                     .class([
                         "flex",
                         "rounded",
-                        "px-2"
+                        "px-2",
+                        "text-gray-900",
+                        "dark:text-gray-50"
                     ])
                     .children(&mut [
                         svg!("svg", {
@@ -164,7 +170,9 @@ impl Bottombar {
                     .class([
                         "flex",
                         "rounded",
-                        "px-2"
+                        "px-2",
+                        "text-gray-900",
+                        "dark:text-gray-50"
                     ])
                     .children(&mut [
                         svg!("svg", {
@@ -200,7 +208,9 @@ impl Bottombar {
                     .class([
                         "flex",
                         "rounded",
-                        "px-2"
+                        "px-2",
+                        "text-gray-900",
+                        "dark:text-gray-50"
                     ])
                     .children(&mut [
                         svg!("svg", {

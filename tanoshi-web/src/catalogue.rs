@@ -59,9 +59,11 @@ impl Catalogue {
             .class("top-0")
             .class("z-30")
             .class("bg-accent")
+            .class("dark:bg-gray-900")
             .class("border-b")
             .class("border-accent-darker")
-            .class("text-white")
+            .class("dark:border-gray-800")
+            .class("text-gray-50")
             .class("pt-safe-top")
             .children(&mut [
                 html!("button", {
