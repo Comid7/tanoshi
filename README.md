@@ -4,10 +4,10 @@
 Selfhosted web manga reader with extension model.
 
 ### Mobile
-![mobile](screenshots/mobile.gif)
+![mobile](screenshots/mobile-1.png)
 
 ### Desktop
-![desktop](screenshots/desktop.gif)
+![desktop](screenshots/desktop-1.png)
 
 
 ## Features
