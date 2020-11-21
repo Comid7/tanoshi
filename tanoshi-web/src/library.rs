@@ -28,8 +28,11 @@ impl Library {
     pub fn render_topbar(spinner: Rc<Spinner>) -> Dom {
         html!("div", {
             .class("w-full")
+            .class("lg:w-auto")
             .class("px-2")
             .class("pb-2")
+            .class("m-0")
+            .class("lg:ml-48")
             .class("flex")
             .class("justify-between")
             .class("block")
@@ -62,15 +65,20 @@ impl Library {
 
     pub fn render_main(library: &Self) -> Dom {
         html!("div", {
-            .class("w-full")
-            .class("grid")
-            .class("grid-cols-3")
-            .class("md:grid-cols-4")
-            .class("lg:grid-cols-6")
-            .class("xl:grid-cols-12")
-            .class("gap-2")
-            .class("px-2")
-            .class("pb-safe-bottom-scroll")
+            .class(["w-full",
+                    "grid",
+                    "grid-cols-3",
+                    "md:grid-cols-4",
+                    "lg:grid-cols-6",
+                    "xl:grid-cols-12",
+                    "gap-2",
+                    "sm:px-2",
+                    "lg:pr-2",
+                    "lg:pl-48",
+                    "ml-0",
+                    "lg:ml-2",
+                    "pb-safe-bottom-scroll"
+            ])
             .children_signal_vec(library.cover_list.signal_vec_cloned().map(clone!(library => move |cover| Cover::render(&cover))))
         })
     }

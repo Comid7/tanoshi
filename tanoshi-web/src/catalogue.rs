@@ -46,15 +46,18 @@ impl Catalogue {
     pub fn render_topbar(catalogue: Rc<Self>) -> Dom {
         html!("div", {
             .class("w-full")
+            .class("lg:w-auto")
             .class("px-2")
             .class("pb-2")
+            .class("m-0")
+            .class("lg:ml-48")
             .class("flex")
             .class("justify-between")
             .class("block")
             .class("fixed")
             .class("inset-x-0")
             .class("top-0")
-            .class("z-50")
+            .class("z-30")
             .class("bg-accent")
             .class("border-b")
             .class("border-accent-darker")
@@ -81,6 +84,10 @@ impl Catalogue {
     pub fn render_main(catalogue: Rc<Self>) -> Dom {
         html!("div", {
             .class("px-2")
+            .class("ml-0")
+            .class("lg:ml-2")
+            .class("lg:pr-2")
+            .class("lg:pl-48")
             .class("pb-safe-bottom-scroll")
             .class("transition-all")
             .children(&mut [
@@ -117,6 +124,10 @@ impl Catalogue {
             .class([
                 "w-full",
                 "mb-2",
+                "ml-0",
+                "lg:ml-2",
+                "lg:pr-2",
+                "lg:pl-48",
                 "inline-flex",
                 "transition-all",
             ])

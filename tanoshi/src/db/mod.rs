@@ -490,7 +490,7 @@ impl Db {
             SELECT *,
             (SELECT c.id FROM chapter c WHERE c.manga_id = chapter.manga_id AND c.rank = chapter.rank - 1) prev,
             (SELECT c.id FROM chapter c WHERE c.manga_id = chapter.manga_id AND c.rank = chapter.rank + 1) next 
-            FROM chapter WHERE manga_id = ?"#
+            FROM chapter WHERE manga_id = ? ORDER BY rank DESC"#
         )
         .bind(manga_id)
         .fetch(&self.pool);
