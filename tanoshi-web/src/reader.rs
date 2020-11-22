@@ -337,7 +337,8 @@ impl Reader {
                     .children_signal_vec(reader.pages.signal_vec_cloned().enumerate().map(clone!(reader => move |(index, page)|
                         html!("img", {
                             .class([
-                                "mx-auto"
+                                "mx-auto",
+                                "h-screen"
                             ])
                             .visible_signal(reader.current_page.signal_cloned().map(move |x| x == index.get().unwrap_or(0)))
                             .attribute("src", &proxied_image_url(&page))

@@ -634,11 +634,24 @@ impl Db {
     }
 
     pub async fn update_page_read_at(&self, page_id: i64) -> Result<u64> {
-        sqlx::query("UPDATE page SET read_at = CURRENT_TIMESTAMP WHERE id = ?")
+        let now = chrono::Local::now();
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow::anyhow!(e))?;
+        sqlx::query("UPDATE page SET read_at = ? WHERE id = ?")
+            .bind(now)
             .bind(page_id)
-            .execute(&self.pool)
+            .execute(&mut tx)
             .await
             .map(|res| res.rows_affected())
-            .map_err(|e| anyhow::anyhow!(e))
+            .map_err(|e| anyhow::anyhow!(e))?;
+
+        sqlx::query("UPDATE chapter SET read_at = ? WHERE id = (SELECT chapter_id FROM page WHERE id = ?)")
+            .bind(now)
+            .bind(page_id)
+            .execute(&mut tx)
+            .await
+            .map(|res| res.rows_affected())
+            .map_err(|e| anyhow::anyhow!(e))?;
+
+        tx.commit().await.map(|_| 1).map_err(|e| anyhow::anyhow!(e))
     }
 }
