@@ -427,6 +427,20 @@ impl Reader {
                 html!("div", {
                     .class("w-full")
                     .children(&mut [
+                        html!("div", {
+                            .class(["w-full", "flex", "justify-between", "border-b", "mb-2"])
+                            .children(&mut [
+                                html!("h1", {
+                                    .text("Settings")
+                                }),
+                                html!("button", {
+                                    .text("Close")
+                                    .event(clone!(reader => move |_: events::Click| {
+                                        reader.is_settings.set_neq(false);
+                                    }))
+                                }),
+                            ])
+                        }),
                         html!("label", {
                             .text("Reader Mode")
                         }),
