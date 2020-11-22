@@ -54,6 +54,7 @@ pub struct Reader {
     pub direction: Mutable<Direction>,
     pub background: Mutable<Background>,
     pub is_settings: Mutable<bool>,
+    pub is_bar_visible: Mutable<bool>,
 }
 
 impl Reader {
@@ -73,6 +74,7 @@ impl Reader {
             direction: Mutable::new(Direction::LeftToRight),
             background: Mutable::new(Background::White),
             is_settings: Mutable::new(false),
+            is_bar_visible: Mutable::new(true),
         })
     }
 
@@ -133,6 +135,7 @@ impl Reader {
                 "pb-2",
                 "text-gray-50"
             ])
+            .visible_signal(reader.is_bar_visible.signal_cloned())
             .children(&mut [
                 html!("button", {
                     .class("mx-2")
@@ -224,6 +227,7 @@ impl Reader {
                 "pb-2",
                 "text-gray-50"
             ])
+            .visible_signal(reader.is_bar_visible.signal_cloned())
             .children(&mut [
                 html!("button", {
                     .child_signal(reader.prev_chapter.signal().map(clone!(reader => move |prev_chapter| {
@@ -305,15 +309,19 @@ impl Reader {
             .children_signal_vec(reader.pages.signal_vec_cloned().enumerate().map(clone!(reader => move |(index, page)|
                 html!("img", {
                     .class("page")
+                    .class("my-1")
                     .class("mx-auto")
                     .attribute("id", index.get().unwrap().to_string().as_str())
                     .attribute("src", &proxied_image_url(&page.url))
                     .event(|_: events::Error| {
                         log::error!("error loading image");
                     })
+                    .event(clone!(reader => move |_: events::Click| {
+                        reader.is_bar_visible.set_neq(!reader.is_bar_visible.get());
+                    }))
                 })
             )))
-            .event_preventable(clone!(reader => move |event: events::Scroll| {
+            .event_preventable(clone!(reader, app => move |event: events::Scroll| {
                 event.prevent_default();
                 let mut page_no = 0;
                 let scroll_top = event.target().unwrap().dyn_into::<web_sys::HtmlElement>().unwrap().scroll_top();
@@ -344,7 +352,8 @@ impl Reader {
                         "w-1/3",
                         "cursor-pointer",
                         "fixed"
-                    ]).class_signal("left-0", reader.direction.signal_cloned().map(|x| match x {
+                    ])
+                    .class_signal("left-0", reader.direction.signal_cloned().map(|x| match x {
                         Direction::LeftToRight => false,
                         Direction::RightToLeft => true,
                     }))
@@ -361,6 +370,19 @@ impl Reader {
                                 false
                             }
                         });
+                    }))
+                }),
+                html!("div", {
+                    .class([
+                        "h-screen",
+                        "w-1/3",
+                        "cursor-pointer",
+                        "fixed",
+                        "inset-x-0",
+                        "mx-auto"
+                    ])
+                    .event(clone!(reader, app => move |_: events::Click| {
+                        reader.is_bar_visible.set_neq(!reader.is_bar_visible.get());
                     }))
                 }),
                 html!("div", {
@@ -435,6 +457,19 @@ impl Reader {
                                 false
                             }
                         });
+                    }))
+                }),
+                html!("div", {
+                    .class([
+                        "h-screen",
+                        "w-1/3",
+                        "cursor-pointer",
+                        "fixed",
+                        "inset-x-0",
+                        "mx-auto"
+                    ])
+                    .event(clone!(reader, app => move |_: events::Click| {
+                        reader.is_bar_visible.set_neq(!reader.is_bar_visible.get());
                     }))
                 }),
                 html!("div", {
