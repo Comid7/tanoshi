@@ -9,19 +9,19 @@ use std::rc::Rc;
 use web_sys::window;
 use wasm_bindgen::JsCast;
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum ReaderMode {
     Continous,
     Paged
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum DisplayMode {
     Single,
     Double
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum Background {
     White,
     Black
@@ -106,7 +106,7 @@ impl Reader {
                 "opacity-75",
                 "pt-safe-top",
                 "pb-2",
-                "text-white"
+                "text-gray-50"
             ])
             .children(&mut [
                 html!("button", {
@@ -197,7 +197,7 @@ impl Reader {
                 "opacity-75",
                 "pt-safe-top",
                 "pb-2",
-                "text-white"
+                "text-gray-50"
             ])
             .children(&mut [
                 html!("button", {
@@ -385,7 +385,8 @@ impl Reader {
                         "flex",
                         "flex-row-reverse",
                         "overflow-y-auto",
-                        "h-screen"
+                        "h-screen",
+                        "justify-center"
                     ])
                     .children_signal_vec(reader.pages.signal_vec_cloned().enumerate().map(clone!(reader => move |(index, page)|
                         html!("img", {
@@ -417,7 +418,9 @@ impl Reader {
                 "mx-auto",
                 "inset-x-0",
                 "bottom-0",
-                "bg-white"
+                "bg-gray-50",
+                "dark:bg-gray-800",
+                "z-50"
             ])
             .visible_signal(reader.is_settings.signal())
             .children(&mut [
@@ -435,7 +438,7 @@ impl Reader {
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-white", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
                                         ReaderMode::Continous => true,
                                         ReaderMode::Paged => false,
                                     }))
@@ -444,7 +447,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-white", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
                                         ReaderMode::Continous => false,
                                         ReaderMode::Paged => true,
                                     }))
@@ -469,7 +472,7 @@ impl Reader {
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-white", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
                                         DisplayMode::Single => true,
                                         DisplayMode::Double => false,
                                     }))
@@ -478,7 +481,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-white", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
                                         DisplayMode::Single => false,
                                         DisplayMode::Double => true,
                                     }))
@@ -502,7 +505,7 @@ impl Reader {
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-white", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
                                         Background::Black => true,
                                         Background::White => false,
                                     }))
@@ -511,7 +514,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-white", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
                                         Background::Black => false,
                                         Background::White => true,
                                     }))
@@ -531,9 +534,17 @@ impl Reader {
         html!("div", {
             .children(&mut [
                 Self::render_topbar(reader.clone()),
-                Self::render_vertical(reader.clone()),
-                //Self::render_single(reader.clone()),
-                //Self::render_double(reader.clone()),
+                html!("div", {
+                    .child_signal(reader.reader_mode.signal_cloned().map(clone!(reader => move |x| match x {
+                        ReaderMode::Continous => Some(Self::render_vertical(reader.clone())),
+                        ReaderMode::Paged => Some(html!("div", {
+                            .child_signal(reader.display_mode.signal_cloned().map(clone!(reader => move |x| match x {
+                                DisplayMode::Single => Some(Self::render_single(reader.clone())),
+                                DisplayMode::Double => Some(Self::render_double(reader.clone())),
+                            })))
+                        }))
+                    })))
+                }),
                 Self::render_bottombar(reader.clone()),
                 Self::render_settings(reader.clone()),
                 Spinner::render(&app.spinner)
