@@ -1,36 +1,61 @@
 use crate::query::{fetch_chapter, update_page_read_at};
 use crate::app::App;
 use crate::common::{events, Spinner, Route};
-use crate::utils::proxied_image_url;
+use crate::utils::{proxied_image_url, local_storage};
 use dominator::{html, svg, Dom, clone, link, routing};
 use futures_signals::signal::{Mutable, SignalExt};
 use futures_signals::signal_vec::{MutableVec, SignalVecExt};
 use std::rc::Rc;
 use web_sys::window;
 use wasm_bindgen::JsCast;
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum ReaderMode {
     Continous,
     Paged
 }
 
-#[derive(PartialEq, Copy, Clone)]
+impl Default for ReaderMode {
+    fn default() -> Self { ReaderMode::Paged }
+}
+
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum DisplayMode {
     Single,
     Double
 }
 
-#[derive(PartialEq, Copy, Clone)]
+impl Default for DisplayMode {
+    fn default() -> Self { DisplayMode::Single }
+}
+
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum Direction {
     LeftToRight,
     RightToLeft
 }
 
-#[derive(PartialEq, Copy, Clone)]
+impl Default for Direction {
+    fn default() -> Self { Direction::LeftToRight }
+}
+
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum Background {
     White,
     Black
+}
+
+impl Default for Background {
+    fn default() -> Self { Background::White }
+}
+
+#[derive(PartialEq, Copy, Clone, Default, Serialize, Deserialize)]
+pub struct Settings {
+    pub reader_mode: ReaderMode,
+    pub display_mode: DisplayMode,
+    pub direction: Direction,
+    pub background: Background,
 }
 
 #[derive(PartialEq, Clone)]
@@ -59,6 +84,16 @@ pub struct Reader {
 
 impl Reader {
     pub fn new(chapter_id: i64) -> Rc<Self> {
+        let settings = if let Ok(settings) = local_storage().get_item("settings:reader") {
+            if let Some(settings) = settings {
+                serde_json::from_str::<Settings>(&settings).unwrap_or_default()
+            } else {
+                Settings::default()
+            }
+        } else {
+            Settings::default()
+        };
+
         Rc::new(Self {
             chapter_id,
             manga_id: Mutable::new(0),
@@ -69,10 +104,10 @@ impl Reader {
             current_page: Mutable::new(0),
             pages: MutableVec::new(),
             pages_len: Mutable::new(0),
-            reader_mode: Mutable::new(ReaderMode::Paged),
-            display_mode: Mutable::new(DisplayMode::Single),
-            direction: Mutable::new(Direction::LeftToRight),
-            background: Mutable::new(Background::White),
+            reader_mode: Mutable::new(settings.reader_mode),
+            display_mode: Mutable::new(settings.display_mode),
+            direction: Mutable::new(settings.direction),
+            background: Mutable::new(settings.background),
             is_settings: Mutable::new(false),
             is_bar_visible: Mutable::new(true),
         })
@@ -92,6 +127,18 @@ impl Reader {
                     reader.prev_chapter.set(result.prev);
                     reader.pages.lock_mut().replace_cloned(result.pages.iter().map(|page| Page{id: page.id, url: page.url.clone()}).collect());
                     reader.pages_len.set_neq(result.pages.len());
+
+
+                    if let Ok(settings) = local_storage().get_item(format!("settings:reader:{}", result.manga.id).as_str()) {
+                        if let Some(settings) = settings {
+                            if let Ok(settings) = serde_json::from_str::<Settings>(&settings) {
+                                reader.reader_mode.set(settings.reader_mode);
+                                reader.display_mode.set(settings.display_mode);
+                                reader.direction.set(settings.direction);
+                                reader.background.set(settings.background);
+                            }
+                        }
+                    }
                 },
                 Err(err) => {
                     log::error!("{}", err);
@@ -562,6 +609,13 @@ impl Reader {
                                 html!("button", {
                                     .text("Close")
                                     .event(clone!(reader => move |_: events::Click| {
+                                        let settings = Settings {
+                                            reader_mode: reader.reader_mode.get(),
+                                            display_mode: reader.display_mode.get(),
+                                            direction: reader.direction.get(),
+                                            background: reader.background.get()
+                                        };
+                                        local_storage().set_item(format!("settings:reader:{}", reader.manga_id.get()).as_str(),  &serde_json::to_string(&settings).unwrap());
                                         reader.is_settings.set_neq(false);
                                     }))
                                 }),

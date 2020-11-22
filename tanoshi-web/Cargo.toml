@@ -50,6 +50,7 @@ features = [
   'Location',
   'FocusEvent',
   'ErrorEvent',
+  'Storage',
 ]
 
 [dev-dependencies]

@@ -4,6 +4,9 @@ use futures::{Future, future::{abortable, AbortHandle}};
 use futures_signals::signal::{Mutable, Signal};
 use wasm_bindgen_futures::spawn_local;
 
+use wasm_bindgen::prelude::*;
+use web_sys::{window, Storage};
+
 struct AsyncState {
     id: usize,
     handle: AbortHandle,
@@ -77,4 +80,8 @@ pub fn proxied_image_url(image_url: &str) -> String {
     url.push_str("/image?url=");
     url.push_str(image_url);
     url
+}
+
+pub fn local_storage() -> Storage {
+    window().unwrap_throw().local_storage().unwrap_throw().unwrap_throw()
 }
