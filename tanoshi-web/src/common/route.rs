@@ -9,6 +9,7 @@ pub enum Route {
     Catalogue(i64),
     Manga(i64),
     Chapter(i64),
+    Updates,
     NotFound,
 }
 
@@ -44,6 +45,12 @@ impl Route {
                     }
                     _ => Route::NotFound,
                 }
+            } else if paths.len() == 1 {
+                if paths[0] == "updates" {
+                    Route::Updates
+                } else {
+                    Route::NotFound
+                }
             } else {
                 Route::NotFound
             }
@@ -56,6 +63,7 @@ impl Route {
             Route::Catalogue(source_id) => ["/catalogue".to_string(), source_id.to_string()].join("/"),
             Route::Manga(manga_id) => ["/manga".to_string(), manga_id.to_string()].join("/"),
             Route::Chapter(chapter_id) => ["/chapter".to_string(), chapter_id.to_string()].join("/"),
+            Route::Updates => "/updates".to_string(),
             Route::NotFound => "/notfound".to_string()
         }
     }

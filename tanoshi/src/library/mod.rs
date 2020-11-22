@@ -58,7 +58,18 @@ impl LibraryRoot {
                 };
                 let edges = edges.unwrap_or(vec![]);
 
-                let mut connection = Connection::new(true, true);
+                let mut has_previous_page = false;
+                let mut has_next_page = false;
+                if edges.len() > 0 {
+                    if let Some(e) = edges.first() {
+                        has_previous_page = db.get_chapter_has_before_page(&format!("{}#{}", e.uploaded.timestamp(), e.chapter_id)).await;
+                    }
+                    if let Some(e) = edges.last() {
+                        has_next_page = db.get_chapter_has_next_page(&format!("{}#{}", e.uploaded.timestamp(), e.chapter_id)).await;
+                    }
+                }
+
+                let mut connection = Connection::new(has_previous_page, has_next_page);
                 connection.append(
                     edges
                         .into_iter()

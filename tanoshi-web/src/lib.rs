@@ -10,6 +10,7 @@ mod manga;
 mod query;
 mod reader;
 mod utils;
+mod updates;
 use app::App;
 
 #[wasm_bindgen(start)]

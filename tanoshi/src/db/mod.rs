@@ -122,7 +122,7 @@ impl Db {
         }
         Ok(mangas)
     }
-    
+
     pub async fn get_recent_updates(
         &self,
         after: &String,
@@ -136,7 +136,8 @@ impl Db {
             before
                 .split("#")
                 .map(|s| s.parse::<i64>().unwrap())
-                .collect::<Vec<i64>>().as_mut(),
+                .collect::<Vec<i64>>()
+                .as_mut(),
         );
         log::info!("params: {:?}", params);
         let mut stream = sqlx::query(
@@ -190,7 +191,8 @@ impl Db {
             before
                 .split("#")
                 .map(|s| s.parse::<i64>().unwrap())
-                .collect::<Vec<i64>>().as_mut(),
+                .collect::<Vec<i64>>()
+                .as_mut(),
         );
         log::info!("params: {:?}", params);
         let mut stream = sqlx::query(
@@ -246,7 +248,8 @@ impl Db {
             before
                 .split("#")
                 .map(|s| s.parse::<i64>().unwrap())
-                .collect::<Vec<i64>>().as_mut(),
+                .collect::<Vec<i64>>()
+                .as_mut(),
         );
         log::info!("params: {:?}", params);
         let mut stream = sqlx::query(
@@ -347,6 +350,70 @@ impl Db {
             });
         }
         Ok(chapters)
+    }
+
+    pub async fn get_chapter_has_next_page(&self, cursor: &String) -> bool {
+        let params = cursor
+            .split("#")
+            .map(|s| s.parse::<i64>().unwrap())
+            .collect::<Vec<i64>>();
+        let mut stream = sqlx::query(
+            r#"
+            SELECT COUNT(1) FROM (
+                SELECT
+                    chapter.id as chapter_id,
+                    chapter.uploaded
+                FROM chapter
+                JOIN manga ON manga.id = chapter.manga_id
+                WHERE 
+                manga.is_favorite = true AND
+                (uploaded, chapter.id) < (datetime(?, 'unixepoch'), ?)
+                ORDER BY chapter.uploaded ASC, chapter.id ASC) c
+            ORDER BY c.uploaded DESC, c.chapter_id DESC"#,
+        )
+        .bind(params[0])
+        .bind(params[1])
+        .fetch_one(&self.pool)
+        .await
+        .ok();
+
+        let mut count = 0;
+        if let Some(row) = stream {
+            count = row.get(0);
+        }
+        count > 0
+    }
+
+    pub async fn get_chapter_has_before_page(&self, cursor: &String) -> bool {
+        let params = cursor
+            .split("#")
+            .map(|s| s.parse::<i64>().unwrap())
+            .collect::<Vec<i64>>();
+        let mut stream = sqlx::query(
+            r#"
+            SELECT COUNT(1) FROM (
+                SELECT
+                chapter.id as chapter_id,
+                chapter.uploaded
+            FROM chapter
+            JOIN manga ON manga.id = chapter.manga_id
+            WHERE 
+            manga.is_favorite = true AND
+            (uploaded, chapter.id) > (datetime(?, 'unixepoch'), ?)
+            ORDER BY chapter.uploaded ASC, chapter.id ASC) c
+        ORDER BY c.uploaded DESC, c.chapter_id DESC"#,
+        )
+        .bind(params[0])
+        .bind(params[1])
+        .fetch_one(&self.pool)
+        .await
+        .ok();
+
+        let mut count = 0;
+        if let Some(row) = stream {
+            count = row.get(0);
+        }
+        count > 0
     }
 
     pub async fn insert_manga(&self, manga: &Manga) -> Result<i64> {
@@ -644,13 +711,15 @@ impl Db {
             .map(|res| res.rows_affected())
             .map_err(|e| anyhow::anyhow!(e))?;
 
-        sqlx::query("UPDATE chapter SET read_at = ? WHERE id = (SELECT chapter_id FROM page WHERE id = ?)")
-            .bind(now)
-            .bind(page_id)
-            .execute(&mut tx)
-            .await
-            .map(|res| res.rows_affected())
-            .map_err(|e| anyhow::anyhow!(e))?;
+        sqlx::query(
+            "UPDATE chapter SET read_at = ? WHERE id = (SELECT chapter_id FROM page WHERE id = ?)",
+        )
+        .bind(now)
+        .bind(page_id)
+        .execute(&mut tx)
+        .await
+        .map(|res| res.rows_affected())
+        .map_err(|e| anyhow::anyhow!(e))?;
 
         tx.commit().await.map(|_| 1).map_err(|e| anyhow::anyhow!(e))
     }

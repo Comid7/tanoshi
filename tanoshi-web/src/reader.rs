@@ -615,7 +615,7 @@ impl Reader {
                                             direction: reader.direction.get(),
                                             background: reader.background.get()
                                         };
-                                        local_storage().set_item(format!("settings:reader:{}", reader.manga_id.get()).as_str(),  &serde_json::to_string(&settings).unwrap());
+                                        let _ = local_storage().set_item(format!("settings:reader:{}", reader.manga_id.get()).as_str(),  &serde_json::to_string(&settings).unwrap());
                                         reader.is_settings.set_neq(false);
                                     }))
                                 }),
