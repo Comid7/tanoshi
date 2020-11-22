@@ -22,6 +22,12 @@ pub enum DisplayMode {
 }
 
 #[derive(PartialEq, Copy, Clone)]
+pub enum Direction {
+    LeftToRight,
+    RightToLeft
+}
+
+#[derive(PartialEq, Copy, Clone)]
 pub enum Background {
     White,
     Black
@@ -45,6 +51,7 @@ pub struct Reader {
     pub pages_len: Mutable<usize>,
     pub reader_mode: Mutable<ReaderMode>,
     pub display_mode: Mutable<DisplayMode>,
+    pub direction: Mutable<Direction>,
     pub background: Mutable<Background>,
     pub is_settings: Mutable<bool>,
 }
@@ -63,6 +70,7 @@ impl Reader {
             pages_len: Mutable::new(0),
             reader_mode: Mutable::new(ReaderMode::Paged),
             display_mode: Mutable::new(DisplayMode::Single),
+            direction: Mutable::new(Direction::LeftToRight),
             background: Mutable::new(Background::White),
             is_settings: Mutable::new(false),
         })
@@ -117,7 +125,7 @@ impl Reader {
                 "inset-x-0",
                 "top-0",
                 "z-50",
-                "bg-gray-900",
+                "bg-gray-800",
                 "z-50",
                 "content-end",
                 "opacity-75",
@@ -208,7 +216,7 @@ impl Reader {
                 "inset-x-0",
                 "bottom-0",
                 "z-50",
-                "bg-gray-900",
+                "bg-gray-800",
                 "z-50",
                 "content-end",
                 "opacity-75",
@@ -334,10 +342,16 @@ impl Reader {
                     .class([
                         "h-screen",
                         "w-1/3",
-                        "left-0",
                         "cursor-pointer",
                         "fixed"
-                    ])
+                    ]).class_signal("left-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => false,
+                        Direction::RightToLeft => true,
+                    }))
+                    .class_signal("right-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => true,
+                        Direction::RightToLeft => false,
+                    }))
                     .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get() + 1, |_, after| {
                             if *after < reader.pages.lock_ref().len()  {
@@ -353,10 +367,17 @@ impl Reader {
                     .class([
                         "h-screen",
                         "w-1/3",
-                        "right-0",
                         "cursor-pointer",
                         "fixed"
                     ])
+                    .class_signal("left-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => true,
+                        Direction::RightToLeft => false,
+                    }))
+                    .class_signal("right-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => false,
+                        Direction::RightToLeft => true,
+                    }))
                     .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get().checked_sub(1).unwrap_or(0), |before, after| {
                             if *before != *after  {
@@ -394,10 +415,17 @@ impl Reader {
                     .class([
                         "h-screen",
                         "w-1/3",
-                        "left-0",
                         "cursor-pointer",
                         "fixed"
                     ])
+                    .class_signal("left-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => false,
+                        Direction::RightToLeft => true,
+                    }))
+                    .class_signal("right-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => true,
+                        Direction::RightToLeft => false,
+                    }))
                     .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get() + 2, |_, after| {
                             if *after < reader.pages.lock_ref().len() {
@@ -417,6 +445,14 @@ impl Reader {
                         "cursor-pointer",
                         "fixed"
                     ])
+                    .class_signal("left-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => true,
+                        Direction::RightToLeft => false,
+                    }))
+                    .class_signal("right-0", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => false,
+                        Direction::RightToLeft => true,
+                    }))
                     .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get().checked_sub(2).unwrap_or(0), |before, after| {
                             if *before != *after {
@@ -431,11 +467,18 @@ impl Reader {
                 html!("div", {
                     .class([
                         "flex",
-                        "flex-row-reverse",
                         "overflow-y-auto",
                         "h-screen",
                         "justify-center"
                     ])
+                    .class_signal("flex-row-reverse", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => false,
+                        Direction::RightToLeft => true,
+                    }))
+                    .class_signal("flex-row", reader.direction.signal_cloned().map(|x| match x {
+                        Direction::LeftToRight => true,
+                        Direction::RightToLeft => false,
+                    }))
                     .children_signal_vec(reader.pages.signal_vec_cloned().enumerate().map(clone!(reader => move |(index, page)|
                         html!("img", {
                             .class(["object-contain"])
@@ -521,6 +564,10 @@ impl Reader {
                     ])
                 }),
                 html!("div", {
+                    // .visible_signal(reader.reader_mode.signal_cloned().map(|x| match x {
+                    //     ReaderMode::Continous => false,
+                    //     ReaderMode::Paged => true,
+                    // }))
                     .children(&mut [
                         html!("label", {
                             .class("w-full")
@@ -549,6 +596,39 @@ impl Reader {
                                     }))
                                     .text("Double")
                                     .event(clone!(reader => move |_: events::Click| reader.display_mode.set_neq(DisplayMode::Double)))
+                                }),
+                            ])
+                        })
+                    ])
+                }),
+                html!("div", {
+                    .children(&mut [
+                        html!("label", {
+                            .text("Direction")
+                        }),
+                        html!("div", {
+                            .class("w-full")
+                            .class("bg-gray-200")
+                            .class("rounded")
+                            .class("p-1")
+                            .children(&mut [
+                                html!("button", {
+                                    .class("w-1/2")
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.direction.signal_cloned().map(|x| match x {
+                                        Direction::LeftToRight => true,
+                                        Direction::RightToLeft => false,
+                                    }))
+                                    .text("Left to Right")
+                                    .event(clone!(reader => move |_: events::Click| reader.direction.set_neq(Direction::LeftToRight)))
+                                }),
+                                html!("button", {
+                                    .class("w-1/2")
+                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.direction.signal_cloned().map(|x| match x {
+                                        Direction::LeftToRight => false,
+                                        Direction::RightToLeft => true,
+                                    }))
+                                    .text("Right to Left")
+                                    .event(clone!(reader => move |_: events::Click| reader.direction.set_neq(Direction::RightToLeft)))
                                 }),
                             ])
                         })
@@ -597,6 +677,14 @@ impl Reader {
             .children(&mut [
                 Self::render_topbar(reader.clone()),
                 html!("div", {
+                    .class_signal("bg-gray-50", reader.background.signal_cloned().map(|x| match x {
+                        Background::White => true,
+                        Background::Black => false,
+                    }))
+                    .class_signal("bg-gray-900", reader.background.signal_cloned().map(|x| match x {
+                        Background::White => false,
+                        Background::Black => true,
+                    }))
                     .child_signal(reader.reader_mode.signal_cloned().map(clone!(reader, app => move |x| match x {
                         ReaderMode::Continous => Some(Self::render_vertical(reader.clone(), app.clone())),
                         ReaderMode::Paged => Some(html!("div", {
