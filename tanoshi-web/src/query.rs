@@ -189,3 +189,26 @@ pub async fn delete_from_library(manga_id: i64) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.graphql",
+    query_path = "graphql/query.graphql",
+    response_derives = "Debug"
+)]
+pub struct UpdatePageReadAt;
+
+pub async fn update_page_read_at(page_id: i64) -> Result<(), Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let var = update_page_read_at::Variables {
+        page_id: Some(page_id),
+    };
+    let request_body = UpdatePageReadAt::build_query(var);
+    let _ = client
+        .post(&graphql_url())
+        .json(&request_body)
+        .send()
+        .await?;
+
+    Ok(())
+}

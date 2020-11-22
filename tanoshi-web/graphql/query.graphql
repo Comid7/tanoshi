@@ -57,3 +57,7 @@ mutation AddToLibrary($mangaId: Int) {
 mutation DeleteFromLibrary($mangaId: Int) {
   deleteFromLibrary(mangaId: $mangaId)
 }
+
+mutation UpdatePageReadAt($pageId: Int) {
+  updatePageReadAt(pageId: $pageId)
+}

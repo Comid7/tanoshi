@@ -1,4 +1,4 @@
-use crate::query::fetch_chapter;
+use crate::query::{fetch_chapter, update_page_read_at};
 use crate::app::App;
 use crate::common::{events, Spinner, Route};
 use crate::utils::proxied_image_url;
@@ -27,6 +27,12 @@ pub enum Background {
     Black
 }
 
+#[derive(PartialEq, Clone)]
+pub struct Page {
+    id: i64,
+    url: String,
+}
+
 pub struct Reader {
     pub chapter_id: i64,
     pub manga_id: Mutable<i64>,
@@ -35,7 +41,7 @@ pub struct Reader {
     pub next_chapter: Mutable<Option<i64>>,
     pub prev_chapter: Mutable<Option<i64>>,
     pub current_page: Mutable<usize>,
-    pub pages: MutableVec<String>,
+    pub pages: MutableVec<Page>,
     pub pages_len: Mutable<usize>,
     pub reader_mode: Mutable<ReaderMode>,
     pub display_mode: Mutable<DisplayMode>,
@@ -74,7 +80,7 @@ impl Reader {
                     reader.chapter_title.set(result.title);
                     reader.next_chapter.set(result.next);
                     reader.prev_chapter.set(result.prev);
-                    reader.pages.lock_mut().replace_cloned(result.pages.iter().map(|page| page.url.clone()).collect());
+                    reader.pages.lock_mut().replace_cloned(result.pages.iter().map(|page| Page{id: page.id, url: page.url.clone()}).collect());
                     reader.pages_len.set_neq(result.pages.len());
                 },
                 Err(err) => {
@@ -84,6 +90,17 @@ impl Reader {
 
             spinner.set_active(false);
         }));
+    }
+
+    pub fn update_page_read(app: Rc<App>, page_id: i64) {
+        app.loader.load(async move {
+            match update_page_read_at(page_id).await {
+                Ok(_) => {},
+                Err(err) => {
+                    log::error!("{}", err);
+                }
+            }
+        });
     }
 
     pub fn render_topbar(reader: Rc<Self>) -> Dom {
@@ -273,7 +290,7 @@ impl Reader {
         })
     }
 
-    pub fn render_vertical(reader: Rc<Self>) -> Dom {
+    pub fn render_vertical(reader: Rc<Self>, app: Rc<App>) -> Dom {
         html!("div", {
             .class("h-screen")
             .class("overflow-y-auto")
@@ -282,7 +299,7 @@ impl Reader {
                     .class("page")
                     .class("mx-auto")
                     .attribute("id", index.get().unwrap().to_string().as_str())
-                    .attribute("src", &proxied_image_url(&page))
+                    .attribute("src", &proxied_image_url(&page.url))
                     .event(|_: events::Error| {
                         log::error!("error loading image");
                     })
@@ -290,21 +307,27 @@ impl Reader {
             )))
             .event_preventable(clone!(reader => move |event: events::Scroll| {
                 event.prevent_default();
-                let mut page = 0;
+                let mut page_no = 0;
                 let scroll_top = event.target().unwrap().dyn_into::<web_sys::HtmlElement>().unwrap().scroll_top();
                 let page_collection = window().unwrap().document().unwrap().get_elements_by_class_name("page");
                 for i in 0..page_collection.length() {
                     if scroll_top > page_collection.item(i).unwrap().dyn_into::<web_sys::HtmlElement>().unwrap().offset_top() {
-                        page = i;
+                        page_no = i;
                     }
-                    // log::info!("page {} scroll_top {}", page_collection.item(i).unwrap().get_attribute("id").unwrap(), page_collection.item(i).unwrap().dyn_into::<web_sys::HtmlElement>().unwrap().offset_top());
                 }
-                reader.current_page.set_neq(page as usize);
+                reader.current_page.set_if(page_no as usize, |before, after| {
+                    if *before != *after {
+                        Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                        true
+                    } else {
+                        false
+                    }
+                });
             }))
         })
     }
 
-    pub fn render_single(reader: Rc<Self>) -> Dom {
+    pub fn render_single(reader: Rc<Self>, app: Rc<App>) -> Dom {
         html!("div", {
             .children(&mut [
                 html!("div", {
@@ -315,9 +338,14 @@ impl Reader {
                         "cursor-pointer",
                         "fixed"
                     ])
-                    .event(clone!(reader => move |_: events::Click| {
+                    .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get() + 1, |_, after| {
-                            *after < reader.pages.lock_ref().len() 
+                            if *after < reader.pages.lock_ref().len()  {
+                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                                true
+                            } else {
+                                false
+                            }
                         });
                     }))
                 }),
@@ -329,8 +357,15 @@ impl Reader {
                         "cursor-pointer",
                         "fixed"
                     ])
-                    .event(clone!(reader => move |_: events::Click| {
-                        reader.current_page.set_neq(reader.current_page.get().checked_sub(1).unwrap_or(0))
+                    .event(clone!(reader, app => move |_: events::Click| {
+                        reader.current_page.set_if(reader.current_page.get().checked_sub(1).unwrap_or(0), |before, after| {
+                            if *before != *after  {
+                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                                true
+                            } else {
+                                false
+                            }
+                        })
                     }))
                 }),
                 html!("div", {
@@ -341,7 +376,7 @@ impl Reader {
                                 "h-screen"
                             ])
                             .visible_signal(reader.current_page.signal_cloned().map(move |x| x == index.get().unwrap_or(0)))
-                            .attribute("src", &proxied_image_url(&page))
+                            .attribute("src", &proxied_image_url(&page.url))
                             .event(|_: events::Error| {
                                 log::error!("error loading image");
                             })
@@ -352,7 +387,7 @@ impl Reader {
         })
     }
 
-    pub fn render_double(reader: Rc<Self>) -> Dom {
+    pub fn render_double(reader: Rc<Self>, app: Rc<App>) -> Dom {
         html!("div", {
             .children(&mut [
                 html!("div", {
@@ -363,9 +398,14 @@ impl Reader {
                         "cursor-pointer",
                         "fixed"
                     ])
-                    .event(clone!(reader => move |_: events::Click| {
+                    .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get() + 2, |_, after| {
-                            *after < reader.pages.lock_ref().len() 
+                            if *after < reader.pages.lock_ref().len() {
+                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                                true
+                            } else {
+                                false
+                            }
                         });
                     }))
                 }),
@@ -377,8 +417,15 @@ impl Reader {
                         "cursor-pointer",
                         "fixed"
                     ])
-                    .event(clone!(reader => move |_: events::Click| {
-                        reader.current_page.set_neq(reader.current_page.get().checked_sub(2).unwrap_or(0));
+                    .event(clone!(reader, app => move |_: events::Click| {
+                        reader.current_page.set_if(reader.current_page.get().checked_sub(2).unwrap_or(0), |before, after| {
+                            if *before != *after {
+                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                                true
+                            } else {
+                                false
+                            }
+                        });
                     }))
                 }),
                 html!("div", {
@@ -393,7 +440,7 @@ impl Reader {
                         html!("img", {
                             .class(["object-contain"])
                             .visible_signal(reader.current_page.signal_cloned().map(move |x| x == index.get().unwrap_or(0) || x + 1 == index.get().unwrap_or(0)))
-                            .attribute("src", &proxied_image_url(&page))
+                            .attribute("src", &proxied_image_url(&page.url))
                             .event(|_: events::Error| {
                                 log::error!("error loading image");
                             })
@@ -550,12 +597,12 @@ impl Reader {
             .children(&mut [
                 Self::render_topbar(reader.clone()),
                 html!("div", {
-                    .child_signal(reader.reader_mode.signal_cloned().map(clone!(reader => move |x| match x {
-                        ReaderMode::Continous => Some(Self::render_vertical(reader.clone())),
+                    .child_signal(reader.reader_mode.signal_cloned().map(clone!(reader, app => move |x| match x {
+                        ReaderMode::Continous => Some(Self::render_vertical(reader.clone(), app.clone())),
                         ReaderMode::Paged => Some(html!("div", {
-                            .child_signal(reader.display_mode.signal_cloned().map(clone!(reader => move |x| match x {
-                                DisplayMode::Single => Some(Self::render_single(reader.clone())),
-                                DisplayMode::Double => Some(Self::render_double(reader.clone())),
+                            .child_signal(reader.display_mode.signal_cloned().map(clone!(reader, app => move |x| match x {
+                                DisplayMode::Single => Some(Self::render_single(reader.clone(), app.clone())),
+                                DisplayMode::Double => Some(Self::render_double(reader.clone(), app.clone())),
                             })))
                         }))
                     })))
