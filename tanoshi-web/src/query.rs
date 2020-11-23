@@ -212,3 +212,28 @@ pub async fn update_page_read_at(page_id: i64) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.graphql",
+    query_path = "graphql/query.graphql",
+    response_derives = "Debug"
+)]
+pub struct FetchRecentUpdates;
+
+pub async fn fetch_recent_updates(cursor: Option<String>) -> Result<fetch_recent_updates::FetchRecentUpdatesRecentUpdates, Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let var = fetch_recent_updates::Variables {
+        first: Some(20),
+        cursor: cursor,
+    };
+    let request_body = FetchRecentUpdates::build_query(var);
+    let res = client
+        .post(&graphql_url())
+        .json(&request_body)
+        .send()
+        .await?;
+    
+    let response_body: Response<fetch_recent_updates::ResponseData> = res.json().await?;
+    Ok(response_body.data.unwrap_throw().recent_updates)
+}

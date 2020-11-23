@@ -10,6 +10,7 @@ use wasm_bindgen::prelude::*;
 use crate::common::{Cover, Spinner};
 use crate::query::fetch_manga_from_favorite;
 use crate::utils::AsyncLoader;
+
 pub struct Library {
     loader: AsyncLoader,
     spinner: Rc<Spinner>,
