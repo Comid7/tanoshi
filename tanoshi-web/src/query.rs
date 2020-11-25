@@ -30,7 +30,7 @@ fn graphql_url() -> String {
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/browse_source.graphql",
     response_derives = "Debug"
 )]
 pub struct BrowseSource;
@@ -69,7 +69,7 @@ pub async fn fetch_manga_from_source(
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/browse_favorites.graphql",
     response_derives = "Debug"
 )]
 pub struct BrowseFavorites;
@@ -95,7 +95,7 @@ pub async fn fetch_manga_from_favorite() -> Result<Vec<Rc<Cover>>, Box<dyn Error
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/fetch_manga_detail.graphql",
     response_derives = "Debug"
 )]
 pub struct FetchMangaDetail;
@@ -120,7 +120,7 @@ pub async fn fetch_manga_detail(
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/fetch_chapter.graphql",
     response_derives = "Debug"
 )]
 pub struct FetchChapter;
@@ -147,7 +147,7 @@ pub async fn fetch_chapter(
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/add_to_library.graphql",
     response_derives = "Debug"
 )]
 pub struct AddToLibrary;
@@ -170,7 +170,7 @@ pub async fn add_to_library(manga_id: i64) -> Result<(), Box<dyn Error>> {
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/delete_from_library.graphql",
     response_derives = "Debug"
 )]
 pub struct DeleteFromLibrary;
@@ -193,7 +193,7 @@ pub async fn delete_from_library(manga_id: i64) -> Result<(), Box<dyn Error>> {
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/update_page_read_at.graphql",
     response_derives = "Debug"
 )]
 pub struct UpdatePageReadAt;
@@ -216,7 +216,7 @@ pub async fn update_page_read_at(page_id: i64) -> Result<(), Box<dyn Error>> {
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.graphql",
-    query_path = "graphql/query.graphql",
+    query_path = "graphql/fetch_recent_updates.graphql",
     response_derives = "Debug"
 )]
 pub struct FetchRecentUpdates;

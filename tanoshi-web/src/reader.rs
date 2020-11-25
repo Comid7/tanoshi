@@ -496,9 +496,9 @@ impl Reader {
                         Direction::RightToLeft => false,
                     }))
                     .event(clone!(reader, app => move |_: events::Click| {
-                        reader.current_page.set_if(reader.current_page.get() + 2, |_, after| {
+                        reader.current_page.set_if(reader.current_page.get() + 2, |before, after| {
                             if *after < reader.pages.lock_ref().len() {
-                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*before).unwrap().id);
                                 true
                             } else {
                                 false
@@ -538,7 +538,7 @@ impl Reader {
                     .event(clone!(reader, app => move |_: events::Click| {
                         reader.current_page.set_if(reader.current_page.get().checked_sub(2).unwrap_or(0), |before, after| {
                             if *before != *after {
-                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*after).unwrap().id);
+                                Self::update_page_read(app.clone(), reader.pages.lock_ref().get(*before).unwrap().id);
                                 true
                             } else {
                                 false
@@ -563,7 +563,7 @@ impl Reader {
                     }))
                     .children_signal_vec(reader.pages.signal_vec_cloned().enumerate().map(clone!(reader => move |(index, page)|
                         html!("img", {
-                            .class(["object-contain"])
+                            .class(["object-contain", "h-screen"])
                             .visible_signal(reader.current_page.signal_cloned().map(move |x| x == index.get().unwrap_or(0) || x + 1 == index.get().unwrap_or(0)))
                             .attribute("src", &proxied_image_url(&page.url))
                             .event(|_: events::Error| {
@@ -593,15 +593,27 @@ impl Reader {
                 "bottom-0",
                 "bg-gray-50",
                 "dark:bg-gray-800",
-                "z-50"
+                "z-50",
+                "text-gray-900",
+                "dark:text-gray-50"
             ])
             .visible_signal(reader.is_settings.signal())
             .children(&mut [
                 html!("div", {
-                    .class("w-full")
+                    .class([
+                        "w-full"
+                    ])
                     .children(&mut [
                         html!("div", {
-                            .class(["w-full", "flex", "justify-between", "border-b", "mb-2"])
+                            .class([
+                                "w-full", 
+                                "flex", 
+                                "justify-between", 
+                                "border-b", 
+                                "border-gray-100",
+                                "dark:border-gray-800",
+                                "mb-2"
+                            ])
                             .children(&mut [
                                 html!("h1", {
                                     .text("Settings")
@@ -625,14 +637,17 @@ impl Reader {
                             .text("Reader Mode")
                         }),
                         html!("div", {
-                            .class("w-full")
-                            .class("bg-gray-200")
-                            .class("rounded")
-                            .class("p-1")
+                            .class([
+                                "w-full",
+                                "bg-gray-200",
+                                "dark:bg-gray-700",
+                                "rounded",
+                                "p-1"
+                            ])
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
                                         ReaderMode::Continous => true,
                                         ReaderMode::Paged => false,
                                     }))
@@ -641,7 +656,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.reader_mode.signal_cloned().map(|x| match x {
                                         ReaderMode::Continous => false,
                                         ReaderMode::Paged => true,
                                     }))
@@ -663,14 +678,17 @@ impl Reader {
                             .text("Display Mode")
                         }),
                         html!("div", {
-                            .class("w-full")
-                            .class("bg-gray-200")
-                            .class("rounded")
-                            .class("p-1")
+                            .class([
+                                "w-full",
+                                "bg-gray-200",
+                                "dark:bg-gray-700",
+                                "rounded",
+                                "p-1"
+                            ])
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
                                         DisplayMode::Single => true,
                                         DisplayMode::Double => false,
                                     }))
@@ -679,7 +697,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.display_mode.signal_cloned().map(|x| match x {
                                         DisplayMode::Single => false,
                                         DisplayMode::Double => true,
                                     }))
@@ -696,14 +714,17 @@ impl Reader {
                             .text("Direction")
                         }),
                         html!("div", {
-                            .class("w-full")
-                            .class("bg-gray-200")
-                            .class("rounded")
-                            .class("p-1")
+                            .class([
+                                "w-full",
+                                "bg-gray-200",
+                                "dark:bg-gray-700",
+                                "rounded",
+                                "p-1"
+                            ])
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.direction.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.direction.signal_cloned().map(|x| match x {
                                         Direction::LeftToRight => true,
                                         Direction::RightToLeft => false,
                                     }))
@@ -712,7 +733,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.direction.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.direction.signal_cloned().map(|x| match x {
                                         Direction::LeftToRight => false,
                                         Direction::RightToLeft => true,
                                     }))
@@ -729,14 +750,17 @@ impl Reader {
                             .text("Background")
                         }),
                         html!("div", {
-                            .class("w-full")
-                            .class("bg-gray-200")
-                            .class("rounded")
-                            .class("p-1")
+                            .class([
+                                "w-full",
+                                "bg-gray-200",
+                                "dark:bg-gray-700",
+                                "rounded",
+                                "p-1"
+                            ])
                             .children(&mut [
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
                                         Background::Black => true,
                                         Background::White => false,
                                     }))
@@ -745,7 +769,7 @@ impl Reader {
                                 }),
                                 html!("button", {
                                     .class("w-1/2")
-                                    .class_signal(["bg-gray-50", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
+                                    .class_signal(["bg-gray-50", "dark:bg-gray-600", "rounded", "shadow"], reader.background.signal_cloned().map(|x| match x {
                                         Background::Black => false,
                                         Background::White => true,
                                     }))

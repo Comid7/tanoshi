@@ -108,7 +108,11 @@ impl Catalogue {
                         Some(Spinner::render(&catalogue.spinner))
                     } else {
                         Some(html!("button", {
-                            .class("w-full")
+                            .class([
+                                "w-full",
+                                "text-gray-900",
+                                "dark:text-gray-50"
+                            ])
                             .text("Load More")
                             .event(clone!(catalogue => move |_: events::Click| {
                                 catalogue.page.set(catalogue.page.get() + 1);

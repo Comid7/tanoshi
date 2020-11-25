@@ -125,21 +125,11 @@ impl Db {
 
     pub async fn get_recent_updates(
         &self,
-        after: &String,
-        before: &String,
+        after_timestamp: i64,
+        after_id: i64,
+        before_timestamp: i64,
+        before_id: i64,
     ) -> Result<Vec<RecentUpdate>> {
-        let mut params = after
-            .split("#")
-            .map(|s| s.parse::<i64>().unwrap())
-            .collect::<Vec<i64>>();
-        params.append(
-            before
-                .split("#")
-                .map(|s| s.parse::<i64>().unwrap())
-                .collect::<Vec<i64>>()
-                .as_mut(),
-        );
-        log::info!("params: {:?}", params);
         let mut stream = sqlx::query(
             r#"
         SELECT
@@ -157,10 +147,10 @@ impl Db {
         (uploaded, chapter.id) > (datetime(?, 'unixepoch'), ?)
         ORDER BY chapter.uploaded DESC, chapter.id DESC"#,
         )
-        .bind(params[0])
-        .bind(params[1])
-        .bind(params[2])
-        .bind(params[3])
+        .bind(after_timestamp)
+        .bind(after_id)
+        .bind(before_timestamp)
+        .bind(before_id)
         .fetch(&self.pool);
 
         let mut chapters = vec![];
@@ -179,22 +169,12 @@ impl Db {
 
     pub async fn get_first_recent_updates(
         &self,
-        after: &String,
-        before: &String,
+        after_timestamp: i64,
+        after_id: i64,
+        before_timestamp: i64,
+        before_id: i64,
         first: i32,
     ) -> Result<Vec<RecentUpdate>> {
-        let mut params = after
-            .split("#")
-            .map(|s| s.parse::<i64>().unwrap())
-            .collect::<Vec<i64>>();
-        params.append(
-            before
-                .split("#")
-                .map(|s| s.parse::<i64>().unwrap())
-                .collect::<Vec<i64>>()
-                .as_mut(),
-        );
-        log::info!("params: {:?}", params);
         let mut stream = sqlx::query(
             r#"
         SELECT
@@ -213,10 +193,10 @@ impl Db {
         ORDER BY chapter.uploaded DESC, chapter.id DESC
         LIMIT ?"#,
         )
-        .bind(params[0])
-        .bind(params[1])
-        .bind(params[2])
-        .bind(params[3])
+        .bind(after_timestamp)
+        .bind(after_id)
+        .bind(before_timestamp)
+        .bind(before_id)
         .bind(first)
         .fetch(&self.pool);
 
@@ -236,46 +216,36 @@ impl Db {
 
     pub async fn get_last_recent_updates(
         &self,
-        after: &String,
-        before: &String,
+        after_timestamp: i64,
+        after_id: i64,
+        before_timestamp: i64,
+        before_id: i64,
         last: i32,
     ) -> Result<Vec<RecentUpdate>> {
-        let mut params = after
-            .split("#")
-            .map(|s| s.parse::<i64>().unwrap())
-            .collect::<Vec<i64>>();
-        params.append(
-            before
-                .split("#")
-                .map(|s| s.parse::<i64>().unwrap())
-                .collect::<Vec<i64>>()
-                .as_mut(),
-        );
-        log::info!("params: {:?}", params);
         let mut stream = sqlx::query(
             r#"
         SELECT * FROM (
             SELECT
-            manga.id,
-            chapter.id,
-            manga.title,
-            manga.cover_url,
-            chapter.title,
-            chapter.uploaded
+                manga.id,
+                chapter.id,
+                manga.title,
+                manga.cover_url,
+                chapter.title,
+                chapter.uploaded
             FROM chapter
             JOIN manga ON manga.id = chapter.manga_id
             WHERE 
-            manga.is_favorite = true AND
-            (uploaded, chapter.id) < (datetime(?, 'unixepoch'), ?) AND
-            (uploaded, chapter.id) > (datetime(?, 'unixepoch'), ?)
+                manga.is_favorite = true AND
+                (uploaded, chapter.id) < (datetime(?, 'unixepoch'), ?) AND
+                (uploaded, chapter.id) > (datetime(?, 'unixepoch'), ?)
             ORDER BY chapter.uploaded ASC, chapter.id ASC
             LIMIT ?) c
         ORDER BY c.uploaded DESC, c.id DESC"#,
         )
-        .bind(params[0])
-        .bind(params[1])
-        .bind(params[2])
-        .bind(params[3])
+        .bind(after_timestamp)
+        .bind(after_id)
+        .bind(before_timestamp)
+        .bind(before_id)
         .bind(last)
         .fetch(&self.pool);
 
@@ -291,6 +261,58 @@ impl Db {
             });
         }
         Ok(chapters)
+    }
+
+    pub async fn get_chapter_has_next_page(&self, timestamp: i64, id: i64) -> bool {
+        let stream = sqlx::query(
+            r#"
+            SELECT
+                chapter.id as chapter_id,
+                chapter.uploaded
+            FROM chapter
+            JOIN manga ON manga.id = chapter.manga_id
+            WHERE 
+                manga.is_favorite = true AND
+                (uploaded, chapter.id) < (datetime(?, 'unixepoch'), ?)
+            ORDER BY chapter.uploaded DESC, chapter.id DESC"#,
+        )
+        .bind(timestamp)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .ok();
+
+        let mut count = 0;
+        if let Some(row) = stream {
+            count = row.get(0);
+        }
+        count > 0
+    }
+
+    pub async fn get_chapter_has_before_page(&self, timestamp: i64, id: i64) -> bool {
+        let stream = sqlx::query(
+            r#"
+        SELECT
+            chapter.id as chapter_id,
+            chapter.uploaded
+        FROM chapter
+        JOIN manga ON manga.id = chapter.manga_id
+        WHERE 
+            manga.is_favorite = true AND
+            (uploaded, chapter.id) > (datetime(?, 'unixepoch'), ?)
+        ORDER BY chapter.uploaded DESC, chapter.id DESC"#,
+        )
+        .bind(timestamp)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .ok();
+
+        let mut count = 0;
+        if let Some(row) = stream {
+            count = row.get(0);
+        }
+        count > 0
     }
 
     pub async fn get_chapter_len(&self) -> Result<i64> {
@@ -312,29 +334,38 @@ impl Db {
         }
     }
 
-    pub async fn get_recent_chapters(&self) -> Result<Vec<RecentChapter>> {
+    pub async fn get_read_chapters(
+        &self,
+        after_timestamp: i64,
+        after_id: i64,
+        before_timestamp: i64,
+        before_id: i64,
+    ) -> Result<Vec<RecentChapter>> {
         let mut stream = sqlx::query(
             r#"
         SELECT
-        manga.id,
-        chapter.id,
-        manga.title,
-        manga.cover_url,
-        chapter.title,
-        p.rank,
-        p.read_at
-        FROM chapter
-        JOIN manga ON manga.id = chapter.manga_id
-        JOIN (
-            SELECT page.id, page.chapter_id, page.manga_id, page.rank, MAX(page.read_at) AS read_at
-            FROM page
-            WHERE page.read_at IS NOT NULL
-            GROUP BY page.chapter_id
-        ) p ON p.manga_id = chapter.manga_id AND p.chapter_id = chapter.id
+            manga.id,
+            chapter.id,
+            manga.title,
+            manga.cover_url,
+            chapter.title,
+            MAX(page.read_at) as read_at,
+            page.id
+        FROM page
+        JOIN chapter ON chapter.id = page.chapter_id
+        JOIN manga ON manga.id = page.manga_id
         WHERE 
-        manga.is_favorite = true
-        ORDER BY p.read_at DESC"#,
+            manga.is_favorite = true AND 
+            page.read_at IS NOT NULL AND
+            (page.read_at, manga.id) < (datetime(?, 'unixepoch'), ?) AND
+            (page.read_at, manga.id) > (datetime(?, 'unixepoch'), ?)
+        GROUP BY page.manga_id
+        ORDER BY page.read_at DESC, manga.id DESC"#,
         )
+        .bind(after_timestamp)
+        .bind(after_id)
+        .bind(before_timestamp)
+        .bind(before_id)
         .fetch(&self.pool);
 
         let mut chapters = vec![];
@@ -345,66 +376,141 @@ impl Db {
                 manga_title: row.get(2),
                 cover_url: row.get(3),
                 chapter_title: row.get(4),
-                last_page_read: row.get(5),
-                read_at: row.get(6),
+                read_at: row.get(5),
+                last_page_read: row.get(6),
             });
         }
         Ok(chapters)
     }
 
-    pub async fn get_chapter_has_next_page(&self, cursor: &String) -> bool {
-        let params = cursor
-            .split("#")
-            .map(|s| s.parse::<i64>().unwrap())
-            .collect::<Vec<i64>>();
+    pub async fn get_first_read_chapters(
+        &self,
+        after_timestamp: i64,
+        after_id: i64,
+        before_timestamp: i64,
+        before_id: i64,
+        first: i32,
+    ) -> Result<Vec<RecentChapter>> {
+        log::info!("{} {} {} {}", after_timestamp, after_id, before_timestamp, before_id);
         let mut stream = sqlx::query(
             r#"
-            SELECT COUNT(1) FROM (
-                SELECT
-                    chapter.id as chapter_id,
-                    chapter.uploaded
-                FROM chapter
-                JOIN manga ON manga.id = chapter.manga_id
-                WHERE 
-                manga.is_favorite = true AND
-                (uploaded, chapter.id) < (datetime(?, 'unixepoch'), ?)
-                ORDER BY chapter.uploaded ASC, chapter.id ASC) c
-            ORDER BY c.uploaded DESC, c.chapter_id DESC"#,
+        SELECT
+            manga.id,
+            chapter.id,
+            manga.title,
+            manga.cover_url,
+            chapter.title,
+            MAX(page.read_at) as read_at,
+            page.id
+        FROM page
+        JOIN chapter ON chapter.id = page.chapter_id
+        JOIN manga ON manga.id = page.manga_id
+        WHERE 
+            manga.is_favorite = true AND 
+            page.read_at IS NOT NULL AND
+            page.manga_id NOT IN (?, ?) AND
+            page.read_at < datetime(?, 'unixepoch') AND
+            page.read_at > datetime(?, 'unixepoch')
+        GROUP BY page.manga_id
+        ORDER BY page.read_at DESC, manga.id DESC
+        LIMIT ?"#,
         )
-        .bind(params[0])
-        .bind(params[1])
-        .fetch_one(&self.pool)
-        .await
-        .ok();
+        .bind(after_id)
+        .bind(before_id)
+        .bind(after_timestamp)
+        .bind(before_timestamp)
+        .bind(first)
+        .fetch(&self.pool);
 
-        let mut count = 0;
-        if let Some(row) = stream {
-            count = row.get(0);
+        let mut chapters = vec![];
+        while let Some(row) = stream.try_next().await? {
+            chapters.push(RecentChapter {
+                manga_id: row.get(0),
+                chapter_id: row.get(1),
+                manga_title: row.get(2),
+                cover_url: row.get(3),
+                chapter_title: row.get(4),
+                read_at: row.get(5),
+                last_page_read: row.get(6),
+            });
         }
-        count > 0
+        Ok(chapters)
     }
 
-    pub async fn get_chapter_has_before_page(&self, cursor: &String) -> bool {
-        let params = cursor
-            .split("#")
-            .map(|s| s.parse::<i64>().unwrap())
-            .collect::<Vec<i64>>();
+    pub async fn get_last_read_chapters(
+        &self,
+        after_timestamp: i64,
+        after_id: i64,
+        before_timestamp: i64,
+        before_id: i64,
+        last: i32,
+    ) -> Result<Vec<RecentChapter>> {
         let mut stream = sqlx::query(
             r#"
-            SELECT COUNT(1) FROM (
-                SELECT
-                chapter.id as chapter_id,
-                chapter.uploaded
-            FROM chapter
-            JOIN manga ON manga.id = chapter.manga_id
+        SELECT * FROM (
+            SELECT
+                manga.id,
+                chapter.id,
+                manga.title,
+                manga.cover_url,
+                chapter.title,
+                MAX(page.read_at) as read_at,
+                page.id
+            FROM page
+            JOIN chapter ON chapter.id = page.chapter_id
+            JOIN manga ON manga.id = page.manga_id
             WHERE 
-            manga.is_favorite = true AND
-            (uploaded, chapter.id) > (datetime(?, 'unixepoch'), ?)
-            ORDER BY chapter.uploaded ASC, chapter.id ASC) c
-        ORDER BY c.uploaded DESC, c.chapter_id DESC"#,
+                manga.is_favorite = true AND 
+                page.read_at IS NOT NULL AND
+                (page.read_at, manga.id) < (datetime(?, 'unixepoch'), ?) AND
+                (page.read_at, manga.id) > (datetime(?, 'unixepoch'), ?)
+            GROUP BY page.manga_id
+            ORDER BY page.read_at ASC, manga.id ASC
+            LIMIT ?) c
+        ORDER BY c.read_at DESC, c.id DESC"#,
         )
-        .bind(params[0])
-        .bind(params[1])
+        .bind(after_timestamp)
+        .bind(after_id)
+        .bind(before_timestamp)
+        .bind(before_id)
+        .bind(last)
+        .fetch(&self.pool);
+
+        let mut chapters = vec![];
+        while let Some(row) = stream.try_next().await? {
+            chapters.push(RecentChapter {
+                manga_id: row.get(0),
+                chapter_id: row.get(1),
+                manga_title: row.get(2),
+                cover_url: row.get(3),
+                chapter_title: row.get(4),
+                read_at: row.get(5),
+                last_page_read: row.get(6),
+            });
+        }
+        Ok(chapters)
+    }
+
+    pub async fn get_read_chapter_has_next_page(&self, timestamp: i64, id: i64) -> bool {
+        let stream = sqlx::query(
+            r#"
+            SELECT COUNT(1) FROM (
+				SELECT
+                	page.id,
+                	MAX(page.read_at) as read_at
+            	FROM page
+            	JOIN manga ON manga.id = page.manga_id
+            	WHERE 
+                	manga.is_favorite = true AND
+                	page.read_at IS NOT NULL AND
+                	page.manga_id <> ? AND
+                	page.read_at < datetime(?, 'unixepoch')
+            	GROUP BY page.manga_id
+            	ORDER BY page.read_at DESC, manga.id DESC
+            )"#,
+        )
+        .bind(id)
+        .bind(timestamp)
         .fetch_one(&self.pool)
         .await
         .ok();
@@ -415,6 +521,38 @@ impl Db {
         }
         count > 0
     }
+
+    pub async fn get_read_chapter_has_before_page(&self, timestamp: i64, id: i64) -> bool {
+        let stream = sqlx::query(
+            r#"
+            SELECT COUNT(1) FROM (
+				SELECT
+                	page.id,
+                	MAX(page.read_at) as read_at
+            	FROM page
+            	JOIN manga ON manga.id = page.manga_id
+            	WHERE 
+                	manga.is_favorite = true AND
+                	page.read_at IS NOT NULL AND
+                	page.manga_id <> ? AND
+                	page.read_at > datetime(?, 'unixepoch')
+            	GROUP BY page.manga_id
+            	ORDER BY page.read_at DESC, manga.id DESC
+            );"#,
+        )
+        .bind(id)
+        .bind(timestamp)
+        .fetch_one(&self.pool)
+        .await
+        .ok();
+
+        let mut count = 0;
+        if let Some(row) = stream {
+            count = row.get(0);
+        }
+        count > 0
+    }
+
 
     pub async fn insert_manga(&self, manga: &Manga) -> Result<i64> {
         let row_id = sqlx::query(
