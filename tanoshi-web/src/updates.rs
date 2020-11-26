@@ -1,10 +1,11 @@
 use std::rc::Rc;
 
-use dominator::{Dom, clone, html, link};
+use dominator::{Dom, clone, events, html, link};
 use futures_signals::signal_vec::{MutableVec, SignalVec, SignalVecExt};
 use crate::{app::App, common::{Route, Spinner}};
 use crate::query::fetch_recent_updates;
 use crate::utils::AsyncLoader;
+use futures_signals::signal::SignalExt;
 use wasm_bindgen::UnwrapThrowExt;
 
 #[derive(Debug, Clone)]
@@ -95,63 +96,84 @@ impl Updates {
                 "lg:pr-2",
                 "lg:pl-52",
             ])
-            .children_signal_vec(updates.entries.signal_vec_cloned().map(|entry| {
-                link!(Route::Chapter(entry.chapter_id).url(), {
-                    .class([
-                        "flex",
-                        "rounded",
-                        "shadow",
-                        "bg-gray-50",
-                        "dark:bg-gray-800",
-                        "p-2",
-                        "m-2"
-                    ])
-                    .children(&mut [
-                        html!("div", {
+            .children(&mut [
+                html!("div", {
+                    .children_signal_vec(updates.entries.signal_vec_cloned().map(|entry| {
+                        link!(Route::Chapter(entry.chapter_id).url(), {
                             .class([
-                                "pb-7/6", 
-                                "mr-2"
+                                "flex",
+                                "rounded",
+                                "shadow",
+                                "bg-gray-50",
+                                "dark:bg-gray-800",
+                                "p-2",
+                                "m-2"
                             ])
                             .children(&mut [
-                                html!("img", {
+                                html!("div", {
                                     .class([
-                                        "w-16",
-                                        "rounded", 
-                                        "object-cover"
+                                        "pb-7/6", 
+                                        "mr-2"
                                     ])
-                                    .attribute("src", &entry.cover_url)
-                                })
-                            ])
-                        }),
-                        html!("div", {
-                            .class(["flex-col"])
-                            .children(&mut [
-                                html!("h1", {
-                                    .class([
-                                        "text-gray-900",
-                                        "dark:text-gray-50",
+                                    .children(&mut [
+                                        html!("img", {
+                                            .class([
+                                                "w-16",
+                                                "rounded", 
+                                                "object-cover"
+                                            ])
+                                            .attribute("src", &entry.cover_url)
+                                        })
                                     ])
-                                    .text(&entry.manga_title)
                                 }),
-                                html!("h2", {
-                                    .class([
-                                        "text-gray-900",
-                                        "dark:text-gray-50",
+                                html!("div", {
+                                    .class(["flex-col"])
+                                    .children(&mut [
+                                        html!("h1", {
+                                            .class([
+                                                "text-gray-900",
+                                                "dark:text-gray-50",
+                                            ])
+                                            .text(&entry.manga_title)
+                                        }),
+                                        html!("h2", {
+                                            .class([
+                                                "text-gray-900",
+                                                "dark:text-gray-50",
+                                            ])
+                                            .text(&entry.chapter_title)
+                                        }),
+                                        html!("h2", {
+                                            .class([
+                                                "text-gray-900",
+                                                "dark:text-gray-50",
+                                            ])
+                                            .text(&Self::calculate_days(entry.uploaded))
+                                        })
                                     ])
-                                    .text(&entry.chapter_title)
-                                }),
-                                html!("h2", {
-                                    .class([
-                                        "text-gray-900",
-                                        "dark:text-gray-50",
-                                    ])
-                                    .text(&Self::calculate_days(entry.uploaded))
                                 })
                             ])
                         })
-                    ])
+                    }))
+                }),
+                html!("div", {
+                    .child_signal(updates.spinner.signal().map(clone!(updates => move |x| if x {
+                        Some(Spinner::render(&updates.spinner))
+                    } else {
+                        Some(html!("button", {
+                            .class([
+                                "w-full",
+                                "text-gray-900",
+                                "dark:text-gray-50"
+                            ])
+                            .text("Load More")
+                            .event(clone!(updates => move |_: events::Click| {
+                                
+                            }))
+                        }))
+                    })))
                 })
-            }))
+            ])
         })
     }
 
