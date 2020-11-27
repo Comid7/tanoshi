@@ -237,3 +237,28 @@ pub async fn fetch_recent_updates(cursor: Option<String>) -> Result<fetch_recent
     let response_body: Response<fetch_recent_updates::ResponseData> = res.json().await?;
     Ok(response_body.data.unwrap_throw().recent_updates)
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.graphql",
+    query_path = "graphql/fetch_histories.graphql",
+    response_derives = "Debug"
+)]
+pub struct FetchHistories;
+
+pub async fn fetch_histories(cursor: Option<String>) -> Result<fetch_histories::FetchHistoriesRecentChapters, Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let var = fetch_histories::Variables {
+        first: Some(20),
+        cursor: cursor,
+    };
+    let request_body = FetchHistories::build_query(var);
+    let res = client
+        .post(&graphql_url())
+        .json(&request_body)
+        .send()
+        .await?;
+    
+    let response_body: Response<fetch_histories::ResponseData> = res.json().await?;
+    Ok(response_body.data.unwrap_throw().recent_chapters)
+}

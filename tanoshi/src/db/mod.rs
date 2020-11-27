@@ -354,18 +354,18 @@ impl Db {
         FROM page
         JOIN chapter ON chapter.id = page.chapter_id
         JOIN manga ON manga.id = page.manga_id
-        WHERE 
-            manga.is_favorite = true AND 
+        WHERE
             page.read_at IS NOT NULL AND
-            (page.read_at, manga.id) < (datetime(?, 'unixepoch'), ?) AND
-            (page.read_at, manga.id) > (datetime(?, 'unixepoch'), ?)
+            page.manga_id NOT IN (?, ?) AND
+            page.read_at < datetime(?, 'unixepoch') AND
+            page.read_at > datetime(?, 'unixepoch')
         GROUP BY page.manga_id
         ORDER BY page.read_at DESC, manga.id DESC"#,
         )
-        .bind(after_timestamp)
         .bind(after_id)
-        .bind(before_timestamp)
         .bind(before_id)
+        .bind(after_timestamp)
+        .bind(before_timestamp)
         .fetch(&self.pool);
 
         let mut chapters = vec![];
@@ -406,7 +406,6 @@ impl Db {
         JOIN chapter ON chapter.id = page.chapter_id
         JOIN manga ON manga.id = page.manga_id
         WHERE 
-            manga.is_favorite = true AND 
             page.read_at IS NOT NULL AND
             page.manga_id NOT IN (?, ?) AND
             page.read_at < datetime(?, 'unixepoch') AND
@@ -460,19 +459,19 @@ impl Db {
             JOIN chapter ON chapter.id = page.chapter_id
             JOIN manga ON manga.id = page.manga_id
             WHERE 
-                manga.is_favorite = true AND 
                 page.read_at IS NOT NULL AND
-                (page.read_at, manga.id) < (datetime(?, 'unixepoch'), ?) AND
-                (page.read_at, manga.id) > (datetime(?, 'unixepoch'), ?)
+                page.manga_id NOT IN (?, ?) AND
+                page.read_at < datetime(?, 'unixepoch') AND
+                page.read_at > datetime(?, 'unixepoch')
             GROUP BY page.manga_id
             ORDER BY page.read_at ASC, manga.id ASC
             LIMIT ?) c
         ORDER BY c.read_at DESC, c.id DESC"#,
         )
-        .bind(after_timestamp)
         .bind(after_id)
-        .bind(before_timestamp)
         .bind(before_id)
+        .bind(after_timestamp)
+        .bind(before_timestamp)
         .bind(last)
         .fetch(&self.pool);
 
@@ -499,9 +498,7 @@ impl Db {
                 	page.id,
                 	MAX(page.read_at) as read_at
             	FROM page
-            	JOIN manga ON manga.id = page.manga_id
             	WHERE 
-                	manga.is_favorite = true AND
                 	page.read_at IS NOT NULL AND
                 	page.manga_id <> ? AND
                 	page.read_at < datetime(?, 'unixepoch')
@@ -530,9 +527,7 @@ impl Db {
                 	page.id,
                 	MAX(page.read_at) as read_at
             	FROM page
-            	JOIN manga ON manga.id = page.manga_id
             	WHERE 
-                	manga.is_favorite = true AND
                 	page.read_at IS NOT NULL AND
                 	page.manga_id <> ? AND
                 	page.read_at > datetime(?, 'unixepoch')

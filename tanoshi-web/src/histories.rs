@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::query::fetch_recent_updates;
+use crate::query::fetch_histories;
 use crate::utils::AsyncLoader;
 use crate::{
     app::App,
@@ -18,20 +18,21 @@ pub struct Entry {
     cover_url: String,
     chapter_id: i64,
     chapter_title: String,
-    uploaded: chrono::NaiveDateTime,
+    read_at: chrono::NaiveDateTime,
+    last_page_read: i64,
     cursor: String,
 }
 
-pub struct Updates {
+pub struct Histories {
     loader: AsyncLoader,
     spinner: Rc<Spinner>,
     entries: MutableVec<Entry>,
     is_entries_empty: Mutable<bool>,
 }
 
-impl Updates {
+impl Histories {
     pub fn new() -> Rc<Self> {
-        Rc::new(Updates {
+        Rc::new(Histories {
             spinner: Spinner::new(),
             loader: AsyncLoader::new(),
             entries: MutableVec::new(),
@@ -39,30 +40,31 @@ impl Updates {
         })
     }
 
-    pub fn fetch_recent_chapters(updates: Rc<Self>) {
-        updates.spinner.set_active(true);
-        updates.loader.load(clone!(updates => async move {
-            let cursor = updates.entries.lock_ref().last().map(|entry| entry.cursor.clone());
-            match fetch_recent_updates(cursor).await {
+    pub fn fetch_read_histories(histories: Rc<Self>) {
+        histories.spinner.set_active(true);
+        histories.loader.load(clone!(histories => async move {
+            let cursor = histories.entries.lock_ref().last().map(|entry| entry.cursor.clone());
+            match fetch_histories(cursor).await {
                 Ok(result) => {
                     for edge in result.edges.unwrap_throw() {
-                        updates.entries.lock_mut().push_cloned(Entry{
+                        histories.entries.lock_mut().push_cloned(Entry{
                             manga_id: edge.as_ref().unwrap_throw().node.manga_id,
                             manga_title: edge.as_ref().unwrap_throw().node.manga_title.clone(),
                             cover_url: edge.as_ref().unwrap_throw().node.cover_url.clone(),
                             chapter_id: edge.as_ref().unwrap_throw().node.chapter_id,
                             chapter_title: edge.as_ref().unwrap_throw().node.chapter_title.clone(),
-                            uploaded: chrono::NaiveDateTime::parse_from_str(&edge.as_ref().unwrap_throw().node.uploaded, "%Y-%m-%d %H:%M:%S").unwrap_throw(),
+                            read_at: chrono::NaiveDateTime::parse_from_str(&edge.as_ref().unwrap_throw().node.read_at, "%Y-%m-%d %H:%M:%S").unwrap_throw(),
+                            last_page_read: edge.as_ref().unwrap_throw().node.last_page_read,
                             cursor: edge.as_ref().unwrap_throw().cursor.clone(),
                         })
                     }
-                    updates.is_entries_empty.set(updates.entries.lock_ref().is_empty());
+                    histories.is_entries_empty.set(histories.entries.lock_ref().is_empty());
                 },
                 Err(err) => {
                     log::error!("{}", err);
                 }
             }
-            updates.spinner.set_active(false);
+            histories.spinner.set_active(false);
         }));
     }
 
@@ -91,13 +93,13 @@ impl Updates {
             .children(&mut [
                 html!("span", {
                     .class("text-gray-300")
-                    .text("Updates")
+                    .text("Histories")
                 })
             ])
         })
     }
 
-    pub fn render_main(updates: Rc<Self>) -> Dom {
+    pub fn render_main(histories: Rc<Self>) -> Dom {
         html!("div", {
             .class([
                 "px-2",
@@ -106,7 +108,7 @@ impl Updates {
             ])
             .children(&mut [
                 html!("div", {
-                    .children_signal_vec(updates.entries.signal_vec_cloned().map(|entry| {
+                    .children_signal_vec(histories.entries.signal_vec_cloned().map(|entry| {
                         link!(Route::Chapter(entry.chapter_id).url(), {
                             .class([
                                 "flex",
@@ -156,7 +158,7 @@ impl Updates {
                                                 "text-gray-900",
                                                 "dark:text-gray-50",
                                             ])
-                                            .text(&Self::calculate_days(entry.uploaded))
+                                            .text(&Self::calculate_days(entry.read_at))
                                         })
                                     ])
                                 })
@@ -165,8 +167,8 @@ impl Updates {
                     }))
                 }),
                 html!("div", {
-                    .child_signal(updates.spinner.signal().map(clone!(updates => move |x| if x {
-                        Some(Spinner::render(&updates.spinner))
+                    .child_signal(histories.spinner.signal().map(clone!(histories => move |x| if x {
+                        Some(Spinner::render(&histories.spinner))
                     } else {
                         Some(html!("button", {
                             .class([
@@ -174,16 +176,16 @@ impl Updates {
                                 "text-gray-900",
                                 "dark:text-gray-50"
                             ])
-                            .class_signal("disabled", updates.is_entries_empty.signal())
-                            .text_signal(updates.is_entries_empty.signal().map(|x| 
+                            .class_signal("disabled", histories.is_entries_empty.signal())
+                            .text_signal(histories.is_entries_empty.signal().map(|x| 
                                 if x {
-                                    "No recent updates, favorite manga to see recent updates"
+                                    "No recent histories, favorite manga to see recent histories"
                                 } else {
                                     "Load More"
                                 }
                             ))
-                            .event(clone!(updates => move |_: events::Click| {
-                                Self::fetch_recent_chapters(updates.clone());
+                            .event(clone!(histories => move |_: events::Click| {
+                                Self::fetch_read_histories(histories.clone());
                             }))
                         }))
                     })))
@@ -212,13 +214,13 @@ impl Updates {
         }
     }
 
-    pub fn render(updates: Rc<Self>, app: Rc<App>) -> Dom {
-        Self::fetch_recent_chapters(updates.clone());
+    pub fn render(histories: Rc<Self>, app: Rc<App>) -> Dom {
+        Self::fetch_read_histories(histories.clone());
         html! {"div", {
             .class("main")
             .children(&mut [
                 Self::render_topbar(),
-                Self::render_main(updates.clone())
+                Self::render_main(histories.clone())
             ])
         }}
     }

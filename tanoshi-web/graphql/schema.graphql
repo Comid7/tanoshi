@@ -6,67 +6,6 @@ schema {
 # Directs the executor to query only when the field exists.
 directive @ifdef on FIELD
 
-type CatalogueRoot {
-  browseSource(
-    # source id
-    sourceId: Int!
-
-    # keyword of the manga
-    keyword: String
-
-    # genres of the manga
-    genres: [String!]
-
-    # page
-    page: Int
-
-    # sort by
-    sortBy: SortByParam
-
-    # sort order
-    sortOrder: SortOrderParam
-  ): [Manga!]!
-  manga(
-    # manga id
-    id: Int!
-  ): Manga
-  chapter(
-    # chapter id
-    id: Int!
-  ): Chapter
-}
-
-type CatalogueRoot_SourceRoot_MergedObjectTail {
-  browseSource(
-    # source id
-    sourceId: Int!
-
-    # keyword of the manga
-    keyword: String
-
-    # genres of the manga
-    genres: [String!]
-
-    # page
-    page: Int
-
-    # sort by
-    sortBy: SortByParam
-
-    # sort order
-    sortOrder: SortOrderParam
-  ): [Manga!]!
-  manga(
-    # manga id
-    id: Int!
-  ): Manga
-  chapter(
-    # chapter id
-    id: Int!
-  ): Chapter
-  installedSources: [Source!]!
-}
-
 type Chapter {
   id: Int!
   title: String!
@@ -83,89 +22,6 @@ type Chapter {
     # fetch from source
     fetch: Boolean! = false
   ): [Page!]!
-}
-
-# Empty additional fields
-type EmptyFields
-
-type LibraryMutationRoot {
-  addToLibrary(
-    # manga id
-    mangaId: Int!
-  ): Int!
-  deleteFromLibrary(
-    # manga id
-    mangaId: Int!
-  ): Int!
-  updatePageReadAt(
-    # page id
-    pageId: Int!
-  ): Int!
-}
-
-type LibraryMutationRoot_MergedObjectTail {
-  addToLibrary(
-    # manga id
-    mangaId: Int!
-  ): Int!
-  deleteFromLibrary(
-    # manga id
-    mangaId: Int!
-  ): Int!
-  updatePageReadAt(
-    # page id
-    pageId: Int!
-  ): Int!
-}
-
-type LibraryRoot {
-  library: [Manga!]!
-  recentUpdates(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): RecentUpdateConnection!
-  recentChapters: [RecentChapter!]!
-}
-
-type LibraryRoot_CatalogueRoot_SourceRoot_MergedObjectTail {
-  library: [Manga!]!
-  recentUpdates(
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): RecentUpdateConnection!
-  recentChapters: [RecentChapter!]!
-  browseSource(
-    # source id
-    sourceId: Int!
-
-    # keyword of the manga
-    keyword: String
-
-    # genres of the manga
-    genres: [String!]
-
-    # page
-    page: Int
-
-    # sort by
-    sortBy: SortByParam
-
-    # sort order
-    sortOrder: SortOrderParam
-  ): [Manga!]!
-  manga(
-    # manga id
-    id: Int!
-  ): Manga
-  chapter(
-    # chapter id
-    id: Int!
-  ): Chapter
-  installedSources: [Source!]!
 }
 
 type Manga {
@@ -187,8 +43,6 @@ type Manga {
     id: Int!
   ): Chapter
 }
-
-type MergedObjectTail
 
 type MutationRoot {
   addToLibrary(
@@ -241,7 +95,12 @@ type QueryRoot {
     first: Int
     last: Int
   ): RecentUpdateConnection!
-  recentChapters: [RecentChapter!]!
+  recentChapters(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): RecentChapterConnection!
   browseSource(
     # source id
     sourceId: Int!
@@ -280,6 +139,23 @@ type RecentChapter {
   chapterTitle: String!
   readAt: NaiveDateTime!
   lastPageRead: Int!
+}
+
+type RecentChapterConnection {
+  # Information to aid in pagination.
+  pageInfo: PageInfo!
+
+  # A list of edges.
+  edges: [RecentChapterEdge]
+}
+
+# An edge in a connection.
+type RecentChapterEdge {
+  # The item at the end of the edge
+  node: RecentChapter!
+
+  # A cursor for use in pagination
+  cursor: String!
 }
 
 type RecentUpdate {
@@ -326,12 +202,4 @@ type Source {
   id: Int!
   name: String!
   version: String!
-}
-
-type SourceRoot {
-  installedSources: [Source!]!
-}
-
-type SourceRoot_MergedObjectTail {
-  installedSources: [Source!]!
 }

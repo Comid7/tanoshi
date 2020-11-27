@@ -11,6 +11,7 @@ mod query;
 mod reader;
 mod utils;
 mod updates;
+mod histories;
 use app::App;
 
 #[wasm_bindgen(start)]
