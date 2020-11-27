@@ -303,8 +303,7 @@ impl Manga {
                 "dark:bg-gray-800", 
                 "p-2",
                 "rounded",
-                "shadow",
-                "over"
+                "shadow"
             ])
             .children(&mut [
                 html!("div", {

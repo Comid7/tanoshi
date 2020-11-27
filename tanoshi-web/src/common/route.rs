@@ -3,6 +3,13 @@ use web_sys::Url;
 use futures_signals::signal::{Signal, SignalExt};
 use dominator::routing;
 
+#[derive(Debug, Clone)]
+pub enum SettingCategory {
+    None,
+    Reader,
+    Source
+}
+
 #[derive(Debug)]
 pub enum Route {
     Library,
@@ -11,7 +18,7 @@ pub enum Route {
     Chapter(i64),
     Updates,
     Histories,
-    Settings,
+    Settings(SettingCategory),
     NotFound,
 }
 
@@ -45,13 +52,20 @@ impl Route {
                             Err(_) => Route::NotFound,
                         }
                     }
+                    "settings" => {
+                        match paths[1] {
+                            "reader" => Route::Settings(SettingCategory::Reader),
+                            "sources" => Route::Settings(SettingCategory::Source),
+                            _ => Route::NotFound
+                        }
+                    }
                     _ => Route::NotFound,
                 }
             } else if paths.len() == 1 {
                 match paths[0] {
                     "updates" => Route::Updates,
                     "histories" => Route::Histories,
-                    "settings" => Route::Settings,
+                    "settings" => Route::Settings(SettingCategory::None),
                     _ => Route::NotFound
                 }
             } else {
@@ -68,7 +82,9 @@ impl Route {
             Route::Chapter(chapter_id) => ["/chapter".to_string(), chapter_id.to_string()].join("/"),
             Route::Updates => "/updates".to_string(),
             Route::Histories => "/histories".to_string(),
-            Route::Settings => "/settings".to_string(),
+            Route::Settings(SettingCategory::None) => "/settings".to_string(),
+            Route::Settings(SettingCategory::Reader) => "/settings/reader".to_string(),
+            Route::Settings(SettingCategory::Source) => "/settings/sources".to_string(),
             Route::NotFound => "/notfound".to_string()
         }
     }

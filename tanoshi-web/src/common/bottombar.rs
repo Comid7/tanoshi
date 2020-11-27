@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use futures::future::Future;
 
-use super::Route;
+use super::{Route, SettingCategory};
 use crate::query::fetch_manga_from_source;
 pub struct Bottombar {
 }
@@ -136,6 +136,10 @@ impl Bottombar {
                         "text-gray-900",
                         "dark:text-gray-50"
                     ])
+                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                        Route::Updates => true,
+                        _ => false,
+                    }))
                     .children(&mut [
                         svg!("svg", {
                             .attribute("xmlns", "http://www.w3.org/2000/svg")
@@ -174,6 +178,10 @@ impl Bottombar {
                         "text-gray-900",
                         "dark:text-gray-50"
                     ])
+                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                        Route::Histories => true,
+                        _ => false,
+                    }))
                     .children(&mut [
                         svg!("svg", {
                             .attribute("xmlns", "http://www.w3.org/2000/svg")
@@ -204,7 +212,7 @@ impl Bottombar {
                         })
                     ])
                 }),
-                link!(Route::Settings.url(), {
+                link!(Route::Settings(SettingCategory::None).url(), {
                     .class([
                         "flex",
                         "rounded",
@@ -212,6 +220,10 @@ impl Bottombar {
                         "text-gray-900",
                         "dark:text-gray-50"
                     ])
+                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                        Route::Settings(_) => true,
+                        _ => false,
+                    }))
                     .children(&mut [
                         svg!("svg", {
                             .attribute("xmlns", "http://www.w3.org/2000/svg")

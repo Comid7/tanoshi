@@ -16,6 +16,7 @@ pub struct Source {
     pub id: i64,
     pub name: String,
     pub version: String,
+    pub icon: String,
 }
 
 #[Object]
@@ -32,6 +33,10 @@ impl Source {
     async fn version(&self) -> String {
         self.version.clone()
     }
+
+    async fn icon(&self) -> String {
+        self.icon.clone()
+    }
 }
 
 impl From<tanoshi_lib::model::Source> for Source {
@@ -39,7 +44,8 @@ impl From<tanoshi_lib::model::Source> for Source {
         Self {
             id: s.id,
             name: s.name,
-            version: s.version
+            version: s.version,
+            icon: s.icon,
         }
     }
 }

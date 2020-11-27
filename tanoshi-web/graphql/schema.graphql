@@ -202,4 +202,5 @@ type Source {
   id: Int!
   name: String!
   version: String!
+  icon: String!
 }

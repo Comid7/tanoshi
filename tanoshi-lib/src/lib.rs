@@ -32,6 +32,7 @@ pub mod model {
         pub name: String,
         pub url: String,
         pub version: String,
+        pub icon: String,
     }
 
     /// A type represent manga details, normalized across source

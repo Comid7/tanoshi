@@ -86,6 +86,7 @@ impl Chapter {
             id: ext.detail().id,
             name: ext.detail().name.clone(),
             version: ext.detail().version.clone(),
+            icon: ext.detail().icon.clone(),
         }
     }
 

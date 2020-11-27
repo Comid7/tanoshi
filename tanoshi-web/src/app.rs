@@ -8,7 +8,7 @@ use futures_signals::signal_vec::{MutableVec, SignalVec, SignalVecExt};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-use crate::{common::{Bottombar, Cover, Route, Spinner}, histories::Histories, settings::Settings, updates::Updates, utils::AsyncLoader};
+use crate::{common::{Bottombar, Cover, Route, SettingCategory, Spinner}, histories::Histories, settings::Settings, updates::Updates, utils::AsyncLoader};
 use crate::library::Library;
 use crate::catalogue::Catalogue;
 use crate::manga::Manga;
@@ -53,9 +53,8 @@ impl App {
                         Histories::render(Histories::new(), app.clone()),
                         Bottombar::render()
                     ],
-                    Route::Settings => vec![
-                        Settings::render(Settings::new(), app.clone()),
-                        Bottombar::render()
+                    Route::Settings(category) => vec![
+                        Settings::render(Settings::new(), app.clone(), category)
                     ],
                     Route::NotFound => vec![
                         Self::render(app.clone()),
