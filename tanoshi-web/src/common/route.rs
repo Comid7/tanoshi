@@ -11,6 +11,7 @@ pub enum Route {
     Chapter(i64),
     Updates,
     Histories,
+    Settings,
     NotFound,
 }
 
@@ -50,6 +51,7 @@ impl Route {
                 match paths[0] {
                     "updates" => Route::Updates,
                     "histories" => Route::Histories,
+                    "settings" => Route::Settings,
                     _ => Route::NotFound
                 }
             } else {
@@ -66,6 +68,7 @@ impl Route {
             Route::Chapter(chapter_id) => ["/chapter".to_string(), chapter_id.to_string()].join("/"),
             Route::Updates => "/updates".to_string(),
             Route::Histories => "/histories".to_string(),
+            Route::Settings => "/settings".to_string(),
             Route::NotFound => "/notfound".to_string()
         }
     }

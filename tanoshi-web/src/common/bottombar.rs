@@ -204,7 +204,7 @@ impl Bottombar {
                         })
                     ])
                 }),
-                link!(Route::Catalogue(2).url(), {
+                link!(Route::Settings.url(), {
                     .class([
                         "flex",
                         "rounded",
