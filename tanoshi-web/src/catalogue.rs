@@ -198,7 +198,11 @@ impl Catalogue {
     pub fn render(catalogue: Rc<Self>) -> Dom {
         Self::fetch_mangas(catalogue.clone());
         html!("div", {
-            .class("main")
+            .class([
+                "main",
+                "bg-gray-50",
+                "dark:bg-gray-900"
+            ])
             .children(&mut [
                 Self::render_topbar(catalogue.clone()),
                 Self::render_search(catalogue.clone()),

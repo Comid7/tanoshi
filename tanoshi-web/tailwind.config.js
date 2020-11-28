@@ -4,6 +4,7 @@ module.exports = {
     theme: {
         colors: {
             gray: colors.trueGray,
+            red: colors.red,
         },
         extend: {
             colors: {
@@ -30,8 +31,8 @@ module.exports = {
         },
     },
     variants: {
-        backgroundColor: ['dark', 'hover', 'focus', 'disabled'],
-        textColor: ['dark', 'hover', 'focus', 'disabled'],
+        backgroundColor: ['dark', 'responsive', 'hover', 'focus', 'disabled'],
+        textColor: ['dark', 'responsive', 'hover', 'focus', 'disabled'],
         divideColor: ['dark']
     },
     plugins: [

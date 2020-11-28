@@ -9,7 +9,28 @@ use wasm_bindgen::prelude::*;
 use futures::future::Future;
 
 use super::{Route, SettingCategory};
-use crate::query::fetch_manga_from_source;
+
+const ACTIVE_CLASS: [&'static str; 6] = [
+    "text-accent", 
+    "lg:text-gray-900",
+    "bg-gray-100", 
+    "dark:bg-gray-800",
+    "lg:bg-gray-300", 
+    "lg:dark:bg-gray-700"
+];
+
+const DEACTIVE_CLASS: [&'static str; 3] = [
+    "text-gray-900", 
+    "dark:text-gray-50",
+    "lg:text-gray-900"
+];
+
+const LINK_CLASS: [&'static str; 3] = [
+    "flex",
+    "rounded",
+    "px-2"
+];
+
 pub struct Bottombar {
 }
 
@@ -36,7 +57,8 @@ impl Bottombar {
                 "safe-bottom",
                 "bg-gray-100",
                 "dark:bg-gray-800",
-                "p-3",
+                "pt-2",
+                "lg:p-3",
                 "flex", 
                 "lg:flex-col", 
                 "justify-evenly",
@@ -45,16 +67,14 @@ impl Bottombar {
             ])
             .children(&mut [
                 link!(Route::Library.url(), {
-                    .class([
-                        "flex",
-                        "rounded",
-                        "px-2",
-                        "text-gray-900",
-                        "dark:text-gray-50"
-                    ])
-                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                    .class(LINK_CLASS)
+                    .class_signal(ACTIVE_CLASS, Route::signal().map(|x| match x {
                         Route::Library => true,
                         _ => false,
+                    }))
+                    .class_signal(DEACTIVE_CLASS, Route::signal().map(|x| match x {
+                        Route::Library => false,
+                        _ => true,
                     }))
                     .children(&mut [
                         svg!("svg", {
@@ -87,16 +107,14 @@ impl Bottombar {
                     ])
                 }),
                 link!(Route::Catalogue(2).url(), {
-                    .class([
-                        "flex",
-                        "rounded",
-                        "px-2",
-                        "text-gray-900",
-                        "dark:text-gray-50"
-                    ])
-                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                    .class(LINK_CLASS)
+                    .class_signal(ACTIVE_CLASS, Route::signal().map(|x| match x {
                         Route::Catalogue(_) => true,
                         _ => false,
+                    }))
+                    .class_signal(DEACTIVE_CLASS, Route::signal().map(|x| match x {
+                        Route::Catalogue(_) => false,
+                        _ => true,
                     }))
                     .children(&mut [
                         svg!("svg", {
@@ -129,16 +147,14 @@ impl Bottombar {
                     ])
                 }),
                 link!(Route::Updates.url(), {
-                    .class([
-                        "flex",
-                        "rounded",
-                        "px-2",
-                        "text-gray-900",
-                        "dark:text-gray-50"
-                    ])
-                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                    .class(LINK_CLASS)
+                    .class_signal(ACTIVE_CLASS, Route::signal().map(|x| match x {
                         Route::Updates => true,
                         _ => false,
+                    }))
+                    .class_signal(DEACTIVE_CLASS, Route::signal().map(|x| match x {
+                        Route::Updates => false,
+                        _ => true,
                     }))
                     .children(&mut [
                         svg!("svg", {
@@ -171,16 +187,14 @@ impl Bottombar {
                     ])
                 }),
                 link!(Route::Histories.url(), {
-                    .class([
-                        "flex",
-                        "rounded",
-                        "px-2",
-                        "text-gray-900",
-                        "dark:text-gray-50"
-                    ])
-                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                    .class(LINK_CLASS)
+                    .class_signal(ACTIVE_CLASS, Route::signal().map(|x| match x {
                         Route::Histories => true,
                         _ => false,
+                    }))
+                    .class_signal(DEACTIVE_CLASS, Route::signal().map(|x| match x {
+                        Route::Histories => false,
+                        _ => true,
                     }))
                     .children(&mut [
                         svg!("svg", {
@@ -213,16 +227,14 @@ impl Bottombar {
                     ])
                 }),
                 link!(Route::Settings(SettingCategory::None).url(), {
-                    .class([
-                        "flex",
-                        "rounded",
-                        "px-2",
-                        "text-gray-900",
-                        "dark:text-gray-50"
-                    ])
-                    .class_signal(["bg-gray-300", "dark:bg-gray-700"], Route::signal().map(|x| match x {
+                    .class(LINK_CLASS)
+                    .class_signal(ACTIVE_CLASS, Route::signal().map(|x| match x {
                         Route::Settings(_) => true,
                         _ => false,
+                    }))
+                    .class_signal(DEACTIVE_CLASS, Route::signal().map(|x| match x {
+                        Route::Settings(_) => false,
+                        _ => true,
                     }))
                     .children(&mut [
                         svg!("svg", {

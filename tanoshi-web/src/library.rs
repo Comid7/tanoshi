@@ -93,7 +93,11 @@ impl Library {
             library.spinner.set_active(false);
         }));
         html!("div", {
-            .class("main")
+            .class([
+                "main",
+                "bg-gray-50",
+                "dark:bg-gray-900"
+            ])
             .children(&mut [
                 Self::render_topbar(library.spinner.clone()),
                 Self::render_main(&library),

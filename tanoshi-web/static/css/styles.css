@@ -95,6 +95,6 @@
 }
 
 .main {
-  margin-top: calc(env(safe-area-inset-top) + theme('spacing.10'));
+  padding-top: calc(env(safe-area-inset-top) + theme('spacing.12'));
   height: 100vh;
 }

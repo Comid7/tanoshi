@@ -129,6 +129,7 @@ type QueryRoot {
     id: Int!
   ): Chapter
   installedSources: [Source!]!
+  source(sourceId: Int!): Source
 }
 
 type RecentChapter {
@@ -203,4 +204,5 @@ type Source {
   name: String!
   version: String!
   icon: String!
+  needLogin: Boolean!
 }

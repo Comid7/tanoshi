@@ -7,7 +7,7 @@ use dominator::routing;
 pub enum SettingCategory {
     None,
     Reader,
-    Source
+    Source(i64),
 }
 
 #[derive(Debug)]
@@ -32,6 +32,13 @@ impl Route {
             paths.retain(|path| *path != "");
             if paths.len() == 0 {
                 Route::Library
+            } else if paths.len() == 1 {
+                match paths[0] {
+                    "updates" => Route::Updates,
+                    "histories" => Route::Histories,
+                    "settings" => Route::Settings(SettingCategory::None),
+                    _ => Route::NotFound
+                }
             } else if paths.len() == 2 {
                 match paths[0] {
                     "catalogue" => {
@@ -55,18 +62,27 @@ impl Route {
                     "settings" => {
                         match paths[1] {
                             "reader" => Route::Settings(SettingCategory::Reader),
-                            "sources" => Route::Settings(SettingCategory::Source),
+                            "sources" => Route::Settings(SettingCategory::Source(0)),
                             _ => Route::NotFound
                         }
                     }
                     _ => Route::NotFound,
                 }
-            } else if paths.len() == 1 {
+            }  else if paths.len() == 3 {
                 match paths[0] {
-                    "updates" => Route::Updates,
-                    "histories" => Route::Histories,
-                    "settings" => Route::Settings(SettingCategory::None),
-                    _ => Route::NotFound
+                    
+                    "settings" => {
+                        match paths[1] {
+                            "sources" => {
+                                match paths[2].parse::<i64>() {
+                                    Ok(source_id) => Route::Settings(SettingCategory::Source(source_id)),
+                                    Err(_) => Route::NotFound,
+                                }
+                            }
+                            _ => Route::NotFound
+                        }
+                    }
+                    _ => Route::NotFound,
                 }
             } else {
                 Route::NotFound
@@ -84,7 +100,7 @@ impl Route {
             Route::Histories => "/histories".to_string(),
             Route::Settings(SettingCategory::None) => "/settings".to_string(),
             Route::Settings(SettingCategory::Reader) => "/settings/reader".to_string(),
-            Route::Settings(SettingCategory::Source) => "/settings/sources".to_string(),
+            Route::Settings(SettingCategory::Source(source_id)) => if *source_id > 0 {format!("/settings/sources/{}", source_id)} else {"/settings/sources".to_string()},
             Route::NotFound => "/notfound".to_string()
         }
     }

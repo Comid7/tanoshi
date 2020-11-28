@@ -284,3 +284,27 @@ pub async fn fetch_sources() -> Result<std::vec::Vec<fetch_sources::FetchSources
     let response_body: Response<fetch_sources::ResponseData> = res.json().await?;
     Ok(response_body.data.unwrap_throw().installed_sources)
 }
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.graphql",
+    query_path = "graphql/fetch_source.graphql",
+    response_derives = "Debug"
+)]
+pub struct FetchSourceDetail;
+
+pub async fn fetch_source(source_id: i64) -> Result<Option<fetch_source_detail::FetchSourceDetailSource>, Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let var = fetch_source_detail::Variables {
+        source_id: Some(source_id),
+    };
+    let request_body = FetchSourceDetail::build_query(var);
+    let res = client
+        .post(&graphql_url())
+        .json(&request_body)
+        .send()
+        .await?;
+    
+    let response_body: Response<fetch_source_detail::ResponseData> = res.json().await?;
+    Ok(response_body.data.unwrap_throw().source)
+}

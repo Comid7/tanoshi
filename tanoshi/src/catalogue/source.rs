@@ -17,6 +17,7 @@ pub struct Source {
     pub name: String,
     pub version: String,
     pub icon: String,
+    pub need_login: bool,
 }
 
 #[Object]
@@ -37,6 +38,10 @@ impl Source {
     async fn icon(&self) -> String {
         self.icon.clone()
     }
+
+    async fn need_login(&self) -> bool {
+        self.need_login
+    }
 }
 
 impl From<tanoshi_lib::model::Source> for Source {
@@ -46,6 +51,7 @@ impl From<tanoshi_lib::model::Source> for Source {
             name: s.name,
             version: s.version,
             icon: s.icon,
+            need_login: s.need_login,
         }
     }
 }
@@ -61,5 +67,13 @@ impl SourceRoot {
             .extensions
             .extentions();
         exts.iter().map(|(_, ext)| ext.detail().into()).collect()
+    }
+
+    async fn source(&self, ctx: &Context<'_>, source_id: i64) -> Option<Source> {
+        let exts = ctx
+            .data_unchecked::<GlobalContext>()
+            .extensions
+            .extentions();
+        exts.iter().find(|(id, _)| **id == source_id).map(|(_, ext)| ext.detail().into())
     }
 }

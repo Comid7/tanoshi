@@ -17,6 +17,7 @@ use crate::reader::Reader;
 pub struct App {
     pub spinner: Rc<Spinner>,
     pub loader: AsyncLoader,
+    pub settings_page: Rc<Settings>
 }
 
 impl App {
@@ -24,6 +25,7 @@ impl App {
         Rc::new(App {
             spinner: Spinner::new(),
             loader: AsyncLoader::new(),
+            settings_page: Settings::new(),
         })
     }
 
@@ -54,7 +56,8 @@ impl App {
                         Bottombar::render()
                     ],
                     Route::Settings(category) => vec![
-                        Settings::render(Settings::new(), app.clone(), category)
+                        Settings::render(app.settings_page.clone(), app.clone(), category),
+                        Bottombar::render()
                     ],
                     Route::NotFound => vec![
                         Self::render(app.clone()),

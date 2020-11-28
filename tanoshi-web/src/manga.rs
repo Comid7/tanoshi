@@ -164,16 +164,12 @@ impl Manga {
             .class([
                 "flex", 
                 "flex-col", 
-                "justify-center", 
-                "border", 
-                "border-gray-300", 
-                "dark:border-gray-700", 
+                "justify-center",
                 "bg-gray-50", 
                 "dark:bg-gray-800", 
                 "p-2", 
                 "mb-2", 
-                "rounded",
-                "shadow",
+                "rounded"
             ])
             .children(&mut [
                 html!("div", {
@@ -229,16 +225,12 @@ impl Manga {
             .class([
                 "flex", 
                 "flex-col", 
-                "justify-center", 
-                "border", 
-                "border-gray-300", 
-                "dark:border-gray-700", 
+                "justify-center",
                 "bg-gray-50",
                 "dark:bg-gray-800", 
                 "p-2", 
                 "mb-2",
-                "rounded",
-                "shadow",
+                "rounded"
             ])
             .children(&mut [
                 html!("div", {
@@ -295,15 +287,11 @@ impl Manga {
             .attribute("id", "description")
             .class([
                 "flex", 
-                "justify-center", 
-                "border", 
-                "border-gray-300", 
-                "dark:border-gray-700", 
+                "justify-center",
                 "bg-gray-50", 
                 "dark:bg-gray-800", 
                 "p-2",
-                "rounded",
-                "shadow"
+                "rounded"
             ])
             .children(&mut [
                 html!("div", {

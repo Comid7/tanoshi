@@ -215,7 +215,11 @@ impl Updates {
     pub fn render(updates: Rc<Self>, app: Rc<App>) -> Dom {
         Self::fetch_recent_chapters(updates.clone());
         html! {"div", {
-            .class("main")
+            .class([
+                "main",
+                "bg-gray-50",
+                "dark:bg-gray-900"
+            ])
             .children(&mut [
                 Self::render_topbar(),
                 Self::render_main(updates.clone())

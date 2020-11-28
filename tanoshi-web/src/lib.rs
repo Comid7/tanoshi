@@ -1,4 +1,7 @@
+#[macro_use]
+extern crate lazy_static;
 extern crate log;
+
 
 use wasm_bindgen::prelude::*;
 
@@ -28,7 +31,7 @@ pub async fn main_js() -> Result<(), JsValue> {
         .body()
         .unwrap_throw()
         .class_list()
-        .add_2("bg-gray-50", "dark:bg-gray-900")
+        .add_2("bg-gray-100", "dark:bg-gray-900")
         .unwrap_throw();
     dominator::append_dom(&dominator::body(), App::render(App::new()));
 
