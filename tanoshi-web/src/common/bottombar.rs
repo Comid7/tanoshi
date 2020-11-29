@@ -42,14 +42,13 @@ impl Bottombar {
     pub fn render() -> Dom {
         html!("div", {
             .class([
-                "block",
                 "fixed",
                 "inset-x-0",
                 "bottom-0",
                 "lg:inset-y-0",
                 "lg:left-0",
                 "lg:w-48",
-                "z-50",
+                "z-40",
                 "border-t",
                 "lg:border-r",
                 "border-gray-300",
@@ -57,13 +56,13 @@ impl Bottombar {
                 "safe-bottom",
                 "bg-gray-100",
                 "dark:bg-gray-800",
-                "pt-2",
-                "lg:p-3",
+                "lg:px-3",
                 "flex", 
                 "lg:flex-col", 
                 "justify-evenly",
                 "lg:justify-start",
-                "pb-safe-bottom"
+                "pb-safe-bottom",
+                "pt-safe-top-bar"
             ])
             .children(&mut [
                 link!(Route::Library.url(), {

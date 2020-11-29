@@ -270,8 +270,8 @@ impl Reader {
                 "z-50",
                 "content-end",
                 "opacity-75",
-                "pt-safe-top",
-                "pb-2",
+                "pt-2",
+                "pb-safe-bottom",
                 "text-gray-50"
             ])
             .visible_signal(reader.is_bar_visible.signal_cloned())
@@ -549,9 +549,9 @@ impl Reader {
                 html!("div", {
                     .class([
                         "flex",
-                        "overflow-y-auto",
                         "h-screen",
-                        "justify-center"
+                        "justify-center",
+                        "overflow-visible"
                     ])
                     .class_signal("flex-row-reverse", reader.direction.signal_cloned().map(|x| match x {
                         Direction::LeftToRight => false,
@@ -787,6 +787,7 @@ impl Reader {
     pub fn render(reader: Rc<Self>, app: Rc<App>) -> Dom {
         Self::fetch_detail(reader.clone(), app.clone());
         html!("div", {
+            .class("h-screen")
             .children(&mut [
                 Self::render_topbar(reader.clone()),
                 html!("div", {

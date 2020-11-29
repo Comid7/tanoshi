@@ -27,19 +27,7 @@ module.exports = (env, argv) => {
         output: {
             path: distPath,
             publicPath: '/',
-            filename: isProduction ? '[name].[contenthash].js' : '[name].[hash].js'
-        },
-        optimization: {
-            runtimeChunk: 'single',
-            splitChunks: {
-                cacheGroups: {
-                    vendor: {
-                        test: /[\\/]node_modules[\\/]/,
-                        name: 'vendors',
-                        chunks: 'all',
-                    },
-                },
-            },
+            filename: isProduction ? '[name].[contenthash].js' : '[name].[fullhash].js'
         },
         plugins: [
             new CleanWebpackPlugin(),
@@ -80,6 +68,9 @@ module.exports = (env, argv) => {
             }),
         ],
         watch: argv.mode !== "production",
+        experiments: {
+            asyncWebAssembly: true,
+        },
         module: {
             rules: [
                 {

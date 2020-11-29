@@ -50,26 +50,21 @@ impl Settings {
         html!("div", {
             .class([
                 "w-full",
-                "lg:w-auto",
-                "px-2",
-                "pb-2",
-                "m-0",
-                "lg:ml-48",
-                "flex",
-                "justify-center",
-                "block",
-                "fixed",
-                "inset-x-0",
-                "top-0",
-                "z-50",
-                "bg-accent",
-                "dark:bg-gray-900",
-                "border-b",
-                "border-accent-darker",
-                "dark:border-gray-800",
-                "text-gray-50",
-                "pt-safe-top",
-                "flex"
+				"px-2",
+				"pb-2",
+				"flex",
+				"justify-between",
+				"fixed",
+				"inset-x-0",
+				"top-0",
+				"z-50",
+				"bg-accent",
+				"dark:bg-gray-900",
+				"border-b",
+				"border-accent-darker",
+				"dark:border-gray-800",
+				"text-gray-50",
+				"pt-safe-top"
             ])
             .children(&mut [
                 html!("button", {

@@ -70,26 +70,24 @@ impl Histories {
 
     pub fn render_topbar() -> Dom {
         html!("div", {
-            .class("w-full")
-            .class("lg:w-auto")
-            .class("px-2")
-            .class("pb-2")
-            .class("m-0")
-            .class("lg:ml-48")
-            .class("flex")
-            .class("justify-center")
-            .class("block")
-            .class("fixed")
-            .class("inset-x-0")
-            .class("top-0")
-            .class("z-50")
-            .class("bg-accent")
-            .class("dark:bg-gray-900")
-            .class("border-b")
-            .class("border-accent-darker")
-            .class("dark:border-gray-800")
-            .class("text-gray-50")
-            .class("pt-safe-top")
+            .class([
+                "w-full",
+				"px-2",
+				"pb-2",
+				"flex",
+				"justify-between",
+				"fixed",
+				"inset-x-0",
+				"top-0",
+				"z-50",
+				"bg-accent",
+				"dark:bg-gray-900",
+				"border-b",
+				"border-accent-darker",
+				"dark:border-gray-800",
+				"text-gray-50",
+				"pt-safe-top"
+            ])
             .children(&mut [
                 html!("span", {
                     .class("text-gray-300")
